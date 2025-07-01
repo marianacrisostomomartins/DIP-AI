@@ -3,7 +3,7 @@ from typing import List, Optional
 import json
 import logging
 
-from .prompts.update_suggestions import suggestions_prompt
+from prompts.update_suggestions import suggestions_prompt
 
 logging.basicConfig(level=logging.INFO)
 

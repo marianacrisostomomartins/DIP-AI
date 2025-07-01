@@ -1,6 +1,10 @@
 fastapi
-uvicorn[standard]
+uvicorn
 pydantic
 ollama
 langgraph
 pytest
+passlib[bcrypt]
+python-jose[cryptography]
+sqlalchemy
+asyncpg
