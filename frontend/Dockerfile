@@ -1,22 +1,15 @@
-# Use a imagem oficial do Node.js 20
-FROM node:20
-
-
-# Defina o diretório de trabalho
+# Etapa 1: Build (Node.js)
+FROM node:20 AS builder
 WORKDIR /app
-
-# Copie apenas o conteúdo do frontend para dentro do container
 COPY . /app
-
-
-# Instale dependências do sistema necessárias para evitar erro xdg-open
-RUN apt-get update && apt-get install -y xdg-utils && rm -rf /var/lib/apt/lists/*
-
-# Instale as dependências do projeto
+COPY public/index.html ./index.html
 RUN npm install
+RUN npm run build
 
-# Exponha a porta padrão do Vite
-EXPOSE 5173
-
-# Comando para rodar o servidor de desenvolvimento
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+# Etapa 2: Produção (Nginx)
+FROM nginx:stable-alpine
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

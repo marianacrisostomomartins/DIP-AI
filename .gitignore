@@ -39,3 +39,7 @@ Desktop.ini
 
 # Ignore secrets
 secrets.env
+
+# Node.js (frontend)
+node_modules/
+package-lock.json
