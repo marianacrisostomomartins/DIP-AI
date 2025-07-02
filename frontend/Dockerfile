@@ -2,7 +2,6 @@
 FROM node:20 AS builder
 WORKDIR /app
 COPY . /app
-COPY public/index.html ./index.html
 RUN npm install
 RUN npm run build
 
