@@ -1,0 +1,37 @@
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  background: #f7fafc;
+  color: #22223b;
+  min-height: 100vh;
+}
+
+/* Links */
+a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Utilitários para centralização */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Espaçamento padrão */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
