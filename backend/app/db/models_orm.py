@@ -1,27 +1,27 @@
 from sqlalchemy import Column, String, Table, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
-from db import Base
+from app.db.db import Base
 
 class UserORM(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    reports = relationship("ReportORM", secondary="user_reports", back_populates="users")
+    canvas = relationship("CanvasORM", secondary="user_canvas", back_populates="users")
 
-class ReportORM(Base):
-    __tablename__ = "reports"
+class CanvasORM(Base):
+    __tablename__ = "canvas"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    canvas_state = Column(Text, default="{}")  # Armazena JSON como string
-    users = relationship("UserORM", secondary="user_reports", back_populates="reports")
+    canvas_state = Column(JSONB, default=dict)
+    users = relationship("UserORM", secondary="user_canvas", back_populates="canvas")
 
-user_reports = Table(
-    "user_reports",
+user_canvas = Table(
+    "user_canvas",
     Base.metadata,
     Column("user_id", UUID(as_uuid=True), ForeignKey("users.id")),
-    Column("report_id", UUID(as_uuid=True), ForeignKey("reports.id")),
+    Column("canvas_id", UUID(as_uuid=True), ForeignKey("canvas.id")),
 )

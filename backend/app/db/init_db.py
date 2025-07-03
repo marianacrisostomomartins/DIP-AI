@@ -1,4 +1,5 @@
-from db import engine, Base
+from app.db.db import engine, Base
+from app.db import models_orm
 import asyncio
 
 async def init_db():

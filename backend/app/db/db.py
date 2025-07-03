@@ -12,3 +12,10 @@ SessionLocal = sessionmaker(
     class_=AsyncSession
 )
 Base = declarative_base()
+
+async def get_db():
+    async with SessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()

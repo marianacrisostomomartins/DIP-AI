@@ -26,7 +26,7 @@ Execute o script `init_db.py` para criar as tabelas automaticamente no banco con
 
 ```bash
 cd backend/app
-python3 db/init_db.py
+python3 -m app.db.init_db
 ```
 
 Certifique-se de que a variável de ambiente `DATABASE_URL` está configurada corretamente (ou edite o valor padrão em `db.py`).

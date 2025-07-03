@@ -1,15 +1,15 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from typing import Dict, List
-from state import CanvasState
-from llm_client import LLMClient
-from schemas.models import User, Report
-from auth import (
+from app.state import CanvasState
+from app.llm_client import LLMClient
+from app.schemas.models import User, Report
+from app.auth import (
     authenticate_user, get_password_hash, create_access_token, get_current_user, fake_users_db
 )
 from fastapi.security import OAuth2PasswordRequestForm
-from .db.db import get_db
-from .db.models_orm import ReportORM, UserORM
+from app.db.db import get_db
+from app.db.models_orm import CanvasORM, UserORM
 from sqlalchemy.future import select
 import uuid
 
@@ -92,7 +92,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @app.post("/reports", response_model=Report)
 async def create_report(name: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
     report_id = str(uuid.uuid4())
-    report = ReportORM(id=report_id, name=name, owner_id=current_user.id, canvas_state="{}")
+    report = CanvasORM(id=report_id, name=name, owner_id=current_user.id, canvas_state="{}")
     db.add(report)
     await db.commit()
     await db.refresh(report)
@@ -126,7 +126,7 @@ async def list_reports(current_user: User = Depends(get_current_user), db=Depend
 
 @app.get("/reports/{report_id}", response_model=Report)
 async def get_report(report_id: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    report = await db.get(ReportORM, report_id)
+    report = await db.get(CanvasORM, report_id)
     if not report or current_user.id not in [u.id for u in report.users]:
         raise HTTPException(status_code=404, detail="Relatório não encontrado ou acesso negado")
     return Report(
@@ -139,7 +139,7 @@ async def get_report(report_id: str, current_user: User = Depends(get_current_us
 
 @app.post("/reports/{report_id}/invite")
 async def invite_user(report_id: str, email: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    report = await db.get(ReportORM, report_id)
+    report = await db.get(CanvasORM, report_id)
     if not report or report.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Apenas o owner pode convidar")
     user = await db.execute(select(UserORM).where(UserORM.email == email))
@@ -153,7 +153,7 @@ async def invite_user(report_id: str, email: str, current_user: User = Depends(g
 
 @app.post("/reports/{report_id}/canvas")
 async def update_report_canvas(report_id: str, canvas: Dict, current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    report = await db.get(ReportORM, report_id)
+    report = await db.get(CanvasORM, report_id)
     if not report or current_user.id not in [u.id for u in report.users]:
         raise HTTPException(status_code=404, detail="Relatório não encontrado ou acesso negado")
     report.canvas_state = str(canvas)
