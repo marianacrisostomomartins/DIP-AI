@@ -2,7 +2,7 @@
 FROM node:20 AS builder
 WORKDIR /app
 COPY . /app
-RUN npm install
+RUN npm install react-icons@latest
 RUN npm run build
 
 # Etapa 2: Produção (Nginx)
