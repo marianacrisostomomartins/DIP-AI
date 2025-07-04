@@ -27,20 +27,20 @@ class CanvasState(BaseModel):
         super().__init__(**data)
     
 
-    def get_canvas(self) -> dict:
-        canvas = {}
-        for field in self.fields:
-            canvas[field.id] = {
-                "title": field.title,
-                "question": field.question
-            }
-            if field.question_suggestion:
-                canvas[field.id]["question_suggestion"] = field.question_suggestion
-            if field.answer_suggestion:
-                canvas[field.id]["answer_suggestion"] = field.answer_suggestion
-            if field.answer:
-                canvas[field.id]["answer"] = field.answer
-        return canvas
+    # def get_canvas(self) -> dict:
+    #     canvas = {}
+    #     for field in self.fields:
+    #         canvas[field.id] = {
+    #             "title": field.title,
+    #             "question": field.question
+    #         }
+    #         if field.question_suggestion:
+    #             canvas[field.id]["question_suggestion"] = field.question_suggestion
+    #         if field.answer_suggestion:
+    #             canvas[field.id]["answer_suggestion"] = field.answer_suggestion
+    #         if field.answer:
+    #             canvas[field.id]["answer"] = field.answer
+    #     return canvas
         
     
     def set_field_answer(self, field_id: int, answer: str):

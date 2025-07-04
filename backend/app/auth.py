@@ -2,20 +2,20 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from dotenv import load_dotenv
 import os
+from app.db.db import get_db
+from app.db.models_orm import UserORM
+from sqlalchemy.future import select
 
 load_dotenv()
 
 # Configurações do JWT
-SECRET_KEY = os.getenv("SECRET_KEY", "sua_chave_secreta_aqui")
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60)
-
-# Simulação de banco de dados em memória
-fake_users_db = {}
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
@@ -26,20 +26,21 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def authenticate_user(email: str, password: str):
-    user = next((u for u in fake_users_db.values() if u.email == email), None)
+async def authenticate_user(email: str, password: str, db=Depends(get_db)):
+    result = await db.execute(select(UserORM).where(UserORM.email == email))
+    user = result.scalars().first()
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.now(datetime.timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -52,7 +53,17 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = fake_users_db.get(user_id)
-    if user is None:
+    user_orm = await db.get(UserORM, user_id)
+    if user_orm is None:
         raise credentials_exception
-    return user
+    
+    # Importa o schema User aqui para evitar import circular
+    from app.schemas.models import User
+    
+    # Converte UserORM para User (sem carregar o relacionamento canvas)
+    return User(
+        id=str(user_orm.id),
+        email=user_orm.email,
+        hashed_password=user_orm.hashed_password,
+        canvas=[]  # Será carregado separadamente quando necessário
+    )

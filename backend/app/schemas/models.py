@@ -5,9 +5,9 @@ class User(BaseModel):
     id: str
     email: str
     hashed_password: str
-    reports: List[str] = []  # Lista de IDs de relatórios
+    canvas: List[str] = []  # Lista de IDs de canvas
 
-class Report(BaseModel):
+class Canvas(BaseModel):
     id: str
     name: str
     owner_id: str

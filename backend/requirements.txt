@@ -9,3 +9,4 @@ python-jose[cryptography]
 sqlalchemy
 asyncpg
 python-multipart
+bcrypt==4.0.1

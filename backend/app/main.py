@@ -1,16 +1,17 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from typing import Dict, List
-from app.state import CanvasState
 from app.llm_client import LLMClient
-from app.schemas.models import User, Report
+from app.schemas import User, Canvas, CanvasState
 from app.auth import (
-    authenticate_user, get_password_hash, create_access_token, get_current_user, fake_users_db
+    authenticate_user, get_password_hash, create_access_token, get_current_user
 )
 from fastapi.security import OAuth2PasswordRequestForm
 from app.db.db import get_db
 from app.db.models_orm import CanvasORM, UserORM
 from sqlalchemy.future import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 import uuid
 
 app = FastAPI(title="DIP-AI API")
@@ -33,16 +34,11 @@ async def root():
     """Rota raiz que retorna informações básicas sobre a API"""
     return {"message": "DIP-AI Canvas API", "version": "0.1.0"}
 
-@app.get("/canvas")
-async def get_canvas(user_id: str = Header(...)) -> Dict:
-    """Retorna o estado atual do canvas do usuário"""
-    canvas_state = get_user_canvas_state(user_id)
-    return canvas_state.get_canvas()
 
 @app.post("/canvas/field/{field_id}")
-async def update_field_answer(field_id: int, field_answer: FieldAnswer, user_id: str = Header(...)) -> Dict:
+async def update_field_answer(field_id: int, field_answer: FieldAnswer, current_user: User = Depends(get_current_user)) -> Dict:
     """
-    Atualiza a resposta de um campo específico e retorna o estado atualizado do canvas do usuário
+    Atualiza a resposta de um campo específico e retorna o estado atualizado do canvas do usuário autenticado
     
     Args:
         field_id: ID do campo a ser atualizado
@@ -54,7 +50,7 @@ async def update_field_answer(field_id: int, field_answer: FieldAnswer, user_id:
     Raises:
         HTTPException: Se o campo não for encontrado
     """
-    canvas_state = get_user_canvas_state(user_id)
+    canvas_state = get_user_canvas_state(str(current_user.id))
     try:
         # Atualiza a resposta do campo
         canvas_state.set_field_answer(field_id, field_answer.answer)
@@ -73,68 +69,114 @@ async def update_field_answer(field_id: int, field_answer: FieldAnswer, user_id:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/register")
-async def register(form_data: OAuth2PasswordRequestForm = Depends()):
-    if any(u.email == form_data.username for u in fake_users_db.values()):
-        raise HTTPException(status_code=400, detail="Email já registrado")
+async def register(form_data: OAuth2PasswordRequestForm = Depends(), db=Depends(get_db)):
+    result = await db.execute(select(UserORM).where(UserORM.email == form_data.username))
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(status_code=409, detail="Email já registrado")
     user_id = str(uuid.uuid4())
-    user = User(id=user_id, email=form_data.username, hashed_password=get_password_hash(form_data.password))
-    fake_users_db[user_id] = user
+    hashed_password = get_password_hash(form_data.password)
+    user = UserORM(id=user_id, email=form_data.username, hashed_password=hashed_password)
+    db.add(user)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Erro ao registrar usuário")
     return {"msg": "Usuário registrado com sucesso"}
 
 @app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db=Depends(get_db)):
+    user = await authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=400, detail="Email ou senha incorretos")
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.post("/reports", response_model=Report)
-async def create_report(name: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    report_id = str(uuid.uuid4())
-    report = CanvasORM(id=report_id, name=name, owner_id=current_user.id, canvas_state="{}")
-    db.add(report)
+@app.post("/create_canvas", response_model=Canvas)
+async def create_canvas(name: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
+    # Verificar se já existe um canvas com o mesmo nome para o usuário
+    result = await db.execute(select(CanvasORM).where(CanvasORM.name == name, CanvasORM.owner_id == current_user.id))
+    if result.scalars().first():
+        raise HTTPException(status_code=409, detail=f"Canvas \"{name}\" já existe")
+
+    canvas_id = str(uuid.uuid4())
+
+    # Criar o estado inicial do canvas
+    initial_canvas_state = CanvasState()
+    canvas_state_dict = initial_canvas_state.model_dump()
+
+    # Obter o usuário completo do banco
+    user_orm = await db.get(UserORM, current_user.id)
+    if not user_orm:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    canvas = CanvasORM(id=canvas_id, name=name, owner_id=current_user.id, canvas_state=canvas_state_dict)
+    
+    # Adicionar o usuário dono à lista de usuários do canvas
+    canvas.users.append(user_orm)
+    
+    db.add(canvas)
     await db.commit()
-    await db.refresh(report)
-    # Adiciona o usuário ao relatório
-    user = await db.get(UserORM, current_user.id)
-    if user:
-        user.reports.append(report)
-        await db.commit()
-    return Report(
-        id=report.id,
-        name=report.name,
-        owner_id=report.owner_id,
-        user_ids=[u.id for u in report.users],
-        canvas_state={}
+    
+    # Recarregar o canvas com os usuários para evitar lazy loading
+    result = await db.execute(
+        select(CanvasORM)
+        .options(selectinload(CanvasORM.users))
+        .where(CanvasORM.id == canvas_id)
+    )
+    canvas_with_users = result.scalars().first()
+    
+    return Canvas(
+        id=str(canvas_with_users.id),
+        name=canvas_with_users.name,
+        owner_id=str(canvas_with_users.owner_id),
+        user_ids=[str(u.id) for u in canvas_with_users.users],
+        canvas_state=canvas_with_users.canvas_state or {}
     )
 
-@app.get("/reports", response_model=List[Report])
-async def list_reports(current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    user = await db.get(UserORM, current_user.id)
+@app.get("/list_canvas", response_model=List[Canvas])
+async def list_canvas(current_user: User = Depends(get_current_user), db=Depends(get_db)):
+    # Buscar o usuário com seus canvas e os usuários de cada canvas
+    result = await db.execute(
+        select(UserORM)
+        .options(selectinload(UserORM.canvas).selectinload(CanvasORM.users))
+        .where(UserORM.id == current_user.id)
+    )
+    user = result.scalars().first()
+    
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
     return [
-        Report(
-            id=report.id,
-            name=report.name,
-            owner_id=report.owner_id,
-            user_ids=[u.id for u in report.users],
-            canvas_state={}
-        ) for report in user.reports
+        Canvas(
+            id=str(canvas.id),
+            name=canvas.name,
+            owner_id=str(canvas.owner_id),
+            user_ids=[str(u.id) for u in canvas.users],
+            canvas_state=canvas.canvas_state or {}
+        ) for canvas in user.canvas
     ]
 
-@app.get("/reports/{report_id}", response_model=Report)
+@app.get("/reports/{report_id}", response_model=Canvas)
 async def get_report(report_id: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    report = await db.get(CanvasORM, report_id)
+    # Buscar o report com os usuários carregados
+    result = await db.execute(
+        select(CanvasORM)
+        .options(selectinload(CanvasORM.users))
+        .where(CanvasORM.id == report_id)
+    )
+    report = result.scalars().first()
+    
     if not report or current_user.id not in [u.id for u in report.users]:
         raise HTTPException(status_code=404, detail="Relatório não encontrado ou acesso negado")
-    return Report(
-        id=report.id,
+    
+    return Canvas(
+        id=str(report.id),
         name=report.name,
-        owner_id=report.owner_id,
-        user_ids=[u.id for u in report.users],
-        canvas_state={}
+        owner_id=str(report.owner_id),
+        user_ids=[str(u.id) for u in report.users],
+        canvas_state=report.canvas_state or {}
     )
 
 @app.post("/reports/{report_id}/invite")
