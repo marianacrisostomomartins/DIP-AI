@@ -65,19 +65,22 @@ async def create_canvas(name: str, current_user: User = Depends(get_current_user
     if not user_orm:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
+    user_id = str(user_orm.id)
+    user_email = user_orm.email
+
     canvas = CanvasORM(id=canvas_id, name=name, owner_id=current_user.id, canvas_state=canvas_state_dict)
     
     # Adicionar o usuário dono à lista de usuários do canvas
     canvas.users.append(user_orm)
-    
     db.add(canvas)
     await db.commit()
     
     return Canvas(
         id=canvas_id,
         name=name,
-        owner=User(id=str(user_orm.id), email=user_orm.email),
-        users=[User(id=str(user_orm.id), email=user_orm.email)]
+        owner=User(id=user_id, email=user_email),
+        users=[User(id=user_id, email=user_email)],
+        canvas_state=None
     )
 
 @app.delete("/canvas/{canvas_id}")
