@@ -24,30 +24,30 @@ class CanvasState(BaseModel):
     def __init__(self, **data):
         if 'fields' not in data:
             data['fields'] = init_canvas()
-        super().__init__(**data)
+        super().__init__(**data)        
     
 
-    # def get_canvas(self) -> dict:
-    #     canvas = {}
-    #     for field in self.fields:
-    #         canvas[field.id] = {
-    #             "title": field.title,
-    #             "question": field.question
-    #         }
-    #         if field.question_suggestion:
-    #             canvas[field.id]["question_suggestion"] = field.question_suggestion
-    #         if field.answer_suggestion:
-    #             canvas[field.id]["answer_suggestion"] = field.answer_suggestion
-    #         if field.answer:
-    #             canvas[field.id]["answer"] = field.answer
-    #     return canvas
+    def get_canvas(self) -> dict:
+        canvas = {}
+        for field in self.fields:
+            canvas[field.id] = {
+                "title": field.title,
+                "question": field.question
+            }
+            if field.question_suggestion:
+                canvas[field.id]["question_suggestion"] = field.question_suggestion
+            if field.answer_suggestion:
+                canvas[field.id]["answer_suggestion"] = field.answer_suggestion
+            if field.answer:
+                canvas[field.id]["answer"] = field.answer
+        return canvas
         
     
     def set_field_answer(self, field_id: int, answer: str):
         for field in self.fields:
             if field.id == field_id:
                 field.answer = answer
-                break
+                return
         raise ValueError(f"Field with id {field_id} not found.")
     
 
@@ -74,7 +74,6 @@ class CanvasState(BaseModel):
             logging.error(f"Erro ao atualizar sugestões da LLM: {e}")
 
 
-# Inicialização do Canvas
 def init_canvas() -> CanvasState:
     questions = [
         {"title": "Objetivo do negócio", "question": "Apresente o objetivo geral da organização."},

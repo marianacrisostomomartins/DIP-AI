@@ -19,3 +19,8 @@ async def get_db():
             yield session
         finally:
             await session.close()
+
+
+def get_db_session_factory():
+    """Retorna a factory de sessões para uso em jobs background"""
+    return SessionLocal

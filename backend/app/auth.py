@@ -60,10 +60,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_d
     # Importa o schema User aqui para evitar import circular
     from app.schemas.models import User
     
-    # Converte UserORM para User (sem carregar o relacionamento canvas)
+    # Converte UserORM para User (sem dados sensíveis)
     return User(
         id=str(user_orm.id),
-        email=user_orm.email,
-        hashed_password=user_orm.hashed_password,
-        canvas=[]  # Será carregado separadamente quando necessário
+        email=user_orm.email
     )
