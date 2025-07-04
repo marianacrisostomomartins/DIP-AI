@@ -50,3 +50,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 pytest
 ```
+
+## Fluxo recomendado para Frontend
+
+1. Usuário preenche campo → Frontend chama POST /canvas/{canvas_id}/field/{field_id}
+2. Resposta imediata com job_id e estado atualizado (sem sugestões ainda)
+3. Polling do status via GET /canvas/{canvas_id}/field/{field_id}/job/{job_id}
+4. Quando job completo → Frontend chama GET /canvas/state/{canvas_id} para obter estado final
