@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from app.llm_client import LLMClient
 from app.schemas import User, Canvas, CanvasState, FieldAnswer
@@ -16,6 +17,15 @@ import uuid
 
 llm_client = LLMClient()
 app = FastAPI(title="DIP-AI API")
+
+# Configuração de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
@@ -163,22 +173,28 @@ async def invite_user(canvas_id: str, email: str, current_user: User = Depends(g
         raise HTTPException(status_code=403, detail="Usuário já possui acesso")
     return True
 
-@app.get("/canvas/state/{canvas_id}", response_model=CanvasState)
+@app.get("/canvas/state/{canvas_id}")
 async def get_canvas_state(canvas_id: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
-    canvas_state = await db.execute(
-        select(CanvasORM.canvas_state)
+    canvas_data = await db.execute(
+        select(CanvasORM.canvas_state, CanvasORM.name)
         .select_from(CanvasORM)
         .join(CanvasORM.users)
         .where(CanvasORM.id == canvas_id, UserORM.id == current_user.id)
     )
-    canvas_state = canvas_state.scalar_one_or_none()
+    canvas_data = canvas_data.first()
 
-    if canvas_state is None:
+    if canvas_data is None:
         raise HTTPException(status_code=403, detail="Canvas não encontrado ou acesso negado")
     
-    return CanvasState(**canvas_state)
+    canvas_state, canvas_name = canvas_data
+    canvas_state = CanvasState(**canvas_state)
+    
+    return {
+        "name": canvas_name,
+        "canvas_state": canvas_state
+    }
 
-@app.post("/canvas/{canvas_id}/field/{field_id}/sync", response_model=CanvasState)
+@app.post("/canvas/{canvas_id}/field/{field_id}/sync")
 async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, current_user: User = Depends(get_current_user), db=Depends(get_db)) -> CanvasState:
     canvas_orm = await db.execute(
         select(CanvasORM)
@@ -191,6 +207,7 @@ async def update_field_answer(canvas_id: str, field_id: int, field_answer: Field
 
     # Criar instância do CanvasState com o estado atual
     canvas_state = CanvasState(**canvas_orm.canvas_state)
+    canvas_name = canvas_orm.name
 
     # Atualizar a resposta do campo
     canvas_state.set_field_answer(field_id, field_answer.answer)
@@ -203,7 +220,10 @@ async def update_field_answer(canvas_id: str, field_id: int, field_answer: Field
     await db.commit()
     
     # Retornar o estado atualizado do canvas
-    return canvas_state
+    return {
+        "name": canvas_name,
+        "canvas_state": canvas_state
+    }
 
 @app.post("/canvas/{canvas_id}/field/{field_id}")
 async def update_field_answer_async(
@@ -225,6 +245,7 @@ async def update_field_answer_async(
 
     # Atualizar apenas a resposta do campo imediatamente (sem LLM)
     canvas_state = CanvasState(**canvas_orm.canvas_state)
+    canvas_name = canvas_orm.name
     canvas_state.set_field_answer(field_id, field_answer.answer)
     canvas_orm.canvas_state = canvas_state.model_dump()
     await db.commit()
@@ -245,6 +266,7 @@ async def update_field_answer_async(
     
     return {
         "job_id": job_id,
+        "name": canvas_name,
         "canvas_state": canvas_state
     }
 
