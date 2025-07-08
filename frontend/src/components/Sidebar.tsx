@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Home, Save, Download, Share2 } from 'lucide-react';
 
 export default function Sidebar() {
   const [showShareModal, setShowShareModal] = useState(false);
@@ -20,7 +21,7 @@ export default function Sidebar() {
   const handleShareSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (shareEmail) {
-      setShareMessage(`Projeto compartilhado com ${shareEmail}!`);
+      setShareMessage(`Projeto compartilhado com ${shareEmail}`);
     } else {
       setShareMessage('Digite um e-mail válido.');
     }
@@ -50,12 +51,20 @@ export default function Sidebar() {
   return (
     <aside className="w-48 bg-gray-900 text-white h-screen p-4 fixed z-40">
       <nav className="flex flex-col space-y-4">
-        <Link to="/" className="hover:text-blue-400">🏠 Projetos</Link>
+        <Link to="/" className="flex items-center gap-3 hover:text-blue-400 transition-colors mb-6">
+          <Home size={30} />
+          <span className="text-xl font-medium">Projetos</span>
+        </Link>
         {isProjectPage && (
           <>
-            <button className="hover:text-blue-400">💾 Salvar</button>
-            <button className="hover:text-blue-400">⬇️ Exportar</button>
-            <button className="hover:text-blue-400" onClick={handleShare}>🔗 Compartilhar</button>
+          <button className="flex items-center gap-3 hover:text-blue-400 transition-colors" onClick={handleShare}>
+              <Share2 size={18} />
+              <span>Compartilhar</span>
+            </button>
+            <button className="flex items-center gap-3 hover:text-blue-400 transition-colors">
+              <Download size={18} />
+              <span>Exportar</span>
+            </button>
           </>
         )}
       </nav>
