@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FieldState } from '../types/api';
 
 interface CanvasModalProps {
@@ -15,23 +15,46 @@ export default function CanvasModal({
   loading = false
 }: CanvasModalProps) {
   const [value, setValue] = useState(question.answer || '');
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
     onSave(value);
   };
 
+  // Fecha apenas ao pressionar ESC (não fecha mais ao clicar fora)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-11/12 md:w-1/2 max-h-[90vh] overflow-auto">
-        <h2 className="text-lg font-bold mb-4">{question.title}</h2>
-        
+      <div ref={modalRef} className="bg-white p-6 rounded-lg w-11/12 md:w-1/2 max-h-[90vh] overflow-auto relative">
+        {/* Botão X para fechar */}
+        <button
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none"
+          onClick={onClose}
+          aria-label="Fechar"
+          disabled={loading}
+        >
+          ×
+        </button>
+        <h2 className="text-lg font-bold mb-4">
+          {question.id} <span className="font-bold">- {question.title}</span>
+        </h2>
         {question.question && (
           <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Pergunta:</h3>
-            <p className="text-sm text-gray-600">{question.question}</p>
+            <p className="text-base text-black mb-1">{question.question}</p>
+            {question.question_suggestion && (
+              <p className="text-base text-blue-700">{question.question_suggestion}</p>
+            )}
           </div>
         )}
-        
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-2">Sua resposta:</h3>
           <textarea
@@ -42,34 +65,21 @@ export default function CanvasModal({
             disabled={loading}
           />
         </div>
-        
-        {(question.question_suggestion || question.answer_suggestion) && (
+        {question.answer_suggestion && (
           <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Sugestões:</h3>
-            <div className="space-y-2">
-              {question.question_suggestion && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded">
-                  <p className="text-sm font-medium text-blue-800 mb-1">Pergunta sugerida:</p>
-                  <p className="text-sm text-blue-700 italic">{question.question_suggestion}</p>
-                </div>
-              )}
-              {question.answer_suggestion && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <p className="text-sm font-medium text-green-800 mb-1">Resposta sugerida:</p>
-                  <p className="text-sm text-green-700 italic">{question.answer_suggestion}</p>
-                  <button
-                    className="mt-2 text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                    onClick={() => setValue(question.answer_suggestion || '')}
-                    disabled={loading}
-                  >
-                    Usar esta sugestão
-                  </button>
-                </div>
-              )}
+            <div className="p-3 bg-green-50 border border-green-200 rounded">
+              <p className="text-sm font-medium text-green-800 mb-1">Resposta sugerida:</p>
+              <p className="text-sm text-green-700 italic">{question.answer_suggestion}</p>
+              <button
+                className="mt-2 text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                onClick={() => setValue(question.answer_suggestion || '')}
+                disabled={loading}
+              >
+                Usar esta sugestão
+              </button>
             </div>
           </div>
         )}
-        
         <div className="flex gap-3 justify-end">
           <button
             className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
