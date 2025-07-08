@@ -25,4 +25,5 @@ INSTRUÇÕES:
 - Retorne apenas o JSON com as sugestões, sem explicações adicionais.
 - Certifique-se de que o JSON esteja bem formatado e válido.
 - Se não houver sugestões para um campo, deixe os campos question_suggestion e answer_suggestion vazios.
+- As sugestões devem ser em português, pois o Canvas é em português.
 """
