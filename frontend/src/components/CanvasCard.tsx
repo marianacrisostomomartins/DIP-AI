@@ -1,102 +1,74 @@
 
-import { useState } from 'react';
+import { FieldState } from '../types/api';
 
 interface CanvasCardProps {
-  id: number;
-  title: string;
-  question: string;
-  answer: string; // sugestão do backend
-  filled: boolean;
+  field: FieldState;
   onClick: () => void;
-  onSubmit?: (id: number, resposta: string) => void;
+  isProcessing?: boolean;
 }
 
-export default function CanvasCard({ id, title, question, answer, filled, onClick, onSubmit }: CanvasCardProps) {
-  const [editMode, setEditMode] = useState(false);
-  const [resposta, setResposta] = useState(answer || '');
-
-  const handleEdit = () => {
-    setEditMode(true);
-    setResposta(answer || '');
-  };
-
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setResposta(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    if (onSubmit) onSubmit(id, resposta);
-    setEditMode(false);
-  };
-
-  const handleUseSuggestion = () => {
-    setResposta(answer || '');
-    if (onSubmit) onSubmit(id, answer || '');
-    setEditMode(false);
-  };
-
+export default function CanvasCard({ field, onClick, isProcessing = false }: CanvasCardProps) {
+  const filled = !!field.answer;
+  
   return (
     <div
+      className={`
+        relative border rounded-xl p-4 cursor-pointer transition-all duration-200 min-h-[120px] flex flex-col
+        ${filled 
+          ? 'border-green-400 bg-green-50 hover:bg-green-100 shadow-md' 
+          : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-blue-400'
+        }
+      `}
       onClick={onClick}
-      className={`p-4 rounded-xl cursor-pointer shadow-md transition-all ${
-        filled ? 'bg-gray-300' : 'bg-gradient-to-tr from-blue-200 to-blue-500'
-      }`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-gray-600">#{id}</span>
-        <h3 className="text-sm font-bold">{title}</h3>
-      </div>
-      <div className="mb-2">
-        <span className="block text-xs font-medium text-gray-700">Enunciado:</span>
-        <p className="text-xs line-clamp-3 text-gray-800">{question || 'Clique para preencher'}</p>
-      </div>
-      <div>
-        <span className="block text-xs font-medium text-gray-700">Resposta:</span>
-        {editMode ? (
-          <>
-            <textarea
-              className="w-full mt-1 p-2 rounded border border-gray-300 text-xs"
-              value={resposta}
-              onChange={handleInput}
-              rows={3}
-              autoFocus
-            />
-            <div className="flex gap-2 mt-2">
-              <button
-                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                onClick={e => { e.stopPropagation(); handleSubmit(); }}
-              >
-                Enviar
-              </button>
-              <button
-                className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
-                onClick={e => { e.stopPropagation(); setEditMode(false); }}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                onClick={e => { e.stopPropagation(); handleUseSuggestion(); }}
-                disabled={!answer}
-              >
-                Usar sugestão
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-xs line-clamp-3 text-gray-800">{resposta || 'Clique para preencher'}</p>
-            <div className="flex gap-2 mt-2">
-              <button
-                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                onClick={e => { e.stopPropagation(); setEditMode(true); }}
-              >
-                {resposta ? 'Editar resposta' : 'Responder'}
-              </button>
-            </div>
-          </>
+        <h3 className="font-semibold text-sm text-gray-800 truncate">{field.id} - {field.title}</h3>
+        {filled && (
+          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+            isProcessing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'
+          }`} />
         )}
       </div>
+      
+      <div className="flex-1 overflow-hidden space-y-2">
+        <p className="text-xs text-gray-600 font-medium">
+          {field.question}
+        </p>
+        
+        {field.answer ? (
+          <p className="text-xs text-gray-800 line-clamp-3">
+            {field.answer}
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {field.question_suggestion && (
+              <p className="text-xs text-gray-500 italic line-clamp-2">
+                Pergunta sugerida: {field.question_suggestion}
+              </p>
+            )}
+            {field.answer_suggestion && (
+              <p className="text-xs text-gray-500 italic line-clamp-2">
+                Resposta sugerida: {field.answer_suggestion}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {filled && (
+        <div className={`mt-2 text-xs font-medium flex items-center ${
+          isProcessing ? 'text-yellow-600' : 'text-green-600'
+        }`}>
+          {isProcessing ? (
+            <>
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></div>
+              Gerando sugestões...
+            </>
+          ) : (
+            '✓ Preenchido'
+          )}
+        </div>
+      )}
     </div>
   );
 }

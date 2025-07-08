@@ -1,51 +1,109 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-// import { FaFolder, FaPen, FaTrash } from 'react-icons/fa6';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
+import { apiClient, ApiError } from '../services/api';
+import { Canvas } from '../types/api';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState(
-    JSON.parse(localStorage.getItem('projects') || '[]')
-  );
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [canvases, setCanvases] = useState<Canvas[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const createNewProject = () => {
-    const name = prompt('Nome do novo projeto:');
-    if (!name) return;
-    const newProject = {
-      id: Date.now(),
-      name,
-      createdAt: new Date().toLocaleString(),
-      owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).email : 'Desconhecido',
-    };
-    const updated = [...projects, newProject];
-    setProjects(updated);
-    localStorage.setItem('projects', JSON.stringify(updated));
-    navigate(`/project/${newProject.id}`);
+  useEffect(() => {
+    // Verificar se o usuário ainda está autenticado
+    if (!isAuthenticated()) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    loadCanvases();
+  }, [isAuthenticated, navigate]);
+
+  const loadCanvases = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient.listCanvases();
+      setCanvases(data);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          // O redirecionamento já será feito pelo handleResponse, 
+          // mas podemos limpar o estado local
+          setError('Sessão expirada');
+          return;
+        }
+        setError(err.message);
+      } else {
+        setError('Erro ao carregar projetos');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const startEditProject = (id: number, name: string) => {
+  const createNewProject = async () => {
+    const name = prompt('Nome do novo projeto:');
+    if (!name) return;
+    
+    try {
+      const newCanvas = await apiClient.createCanvas(name);
+      setCanvases(prev => [...prev, newCanvas]);
+      navigate(`/project/${newCanvas.id}`);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          // O redirecionamento já será feito pelo handleResponse
+          return;
+        }
+        alert(err.message);
+      } else {
+        alert('Erro ao criar projeto');
+      }
+    }
+  };
+
+  const startEditProject = (id: string, name: string) => {
     setEditingId(id);
     setEditName(name);
   };
 
-  const saveEditProject = (id: number) => {
-    const updated = projects.map((p: any) =>
-      p.id === id ? { ...p, name: editName } : p
-    );
-    setProjects(updated);
-    localStorage.setItem('projects', JSON.stringify(updated));
-    setEditingId(null);
-    setEditName('');
+  const saveEditProject = async (id: string) => {
+    try {
+      // TODO: Implementar endpoint de update canvas name no backend
+      // Por enquanto, apenas atualizar localmente
+      setCanvases(prev => 
+        prev.map(canvas => 
+          canvas.id === id ? { ...canvas, name: editName } : canvas
+        )
+      );
+      setEditingId(null);
+      setEditName('');
+    } catch (err) {
+      alert('Erro ao salvar alterações');
+    }
   };
 
-  const deleteProject = (id: number) => {
+  const deleteProject = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja deletar este projeto?')) return;
-    const updated = projects.filter((p: any) => p.id !== id);
-    setProjects(updated);
-    localStorage.setItem('projects', JSON.stringify(updated));
+    
+    try {
+      await apiClient.deleteCanvas(id);
+      setCanvases(prev => prev.filter(canvas => canvas.id !== id));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          // O redirecionamento já será feito pelo handleResponse
+          return;
+        }
+        alert(err.message);
+      } else {
+        alert('Erro ao deletar projeto');
+      }
+    }
   };
 
   return (
@@ -62,62 +120,100 @@ export default function Home() {
               <span className="text-xl">+</span> Novo Projeto
             </button>
           </div>
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-            {projects.map((project: any) => (
-              <div
-                key={project.id}
-                className="relative group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-200 p-4 sm:p-6 flex flex-col items-start min-h-[160px] sm:min-h-[180px] border border-gray-100 w-full"
+          
+          {loading && (
+            <div className="text-center py-8">
+              <p className="text-gray-600">Carregando projetos...</p>
+            </div>
+          )}
+          
+          {error && (
+            <div className="text-center py-8">
+              <p className="text-red-600">{error}</p>
+              <button 
+                onClick={loadCanvases}
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                {editingId === project.id ? (
-                  <>
-                    <input
-                      className="border-2 border-blue-300 focus:border-blue-500 px-3 py-2 rounded-lg w-full mb-3 text-base outline-none transition"
-                      value={editName}
-                      onChange={e => setEditName(e.target.value)}
-                      autoFocus
-                    />
-                    <div className="flex gap-2 w-full justify-end">
-                      <button
-                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium shadow"
-                        onClick={() => saveEditProject(project.id)}
-                      >Salvar</button>
-                      <button
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium shadow"
-                        onClick={() => setEditingId(null)}
-                      >Cancelar</button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to={`/project/${project.id}`}
-                      className="text-lg sm:text-xl font-bold text-blue-700 hover:underline mb-2 transition break-words max-w-full"
-                    >
-                      {project.name}
-                    </Link>
-                    <div className="text-xs text-gray-400 mb-1 break-words max-w-full">{project.createdAt || ''}</div>
-                    <div className="text-xs text-gray-400 mb-4 break-words max-w-full">Proprietário: {project.owner || 'Desconhecido'}</div>
-                    <div className="flex gap-2 sm:gap-3 absolute top-3 sm:top-4 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                      <button
-                        title="Editar"
-                        className="text-blue-500 hover:text-blue-700 font-semibold px-2 py-1 rounded transition"
-                        onClick={() => startEditProject(project.id, project.name)}
+                Tentar novamente
+              </button>
+            </div>
+          )}
+          
+          {!loading && !error && (
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+              {canvases.map((canvas) => (
+                <div
+                  key={canvas.id}
+                  className="relative group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-200 p-4 sm:p-6 flex flex-col items-start min-h-[180px] sm:min-h-[200px] border border-gray-100 w-full"
+                >
+                  {editingId === canvas.id ? (
+                    <>
+                      <input
+                        className="border-2 border-blue-300 focus:border-blue-500 px-3 py-2 rounded-lg w-full mb-3 text-base outline-none transition"
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        autoFocus
+                      />
+                      <div className="flex gap-2 w-full justify-end">
+                        <button
+                          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium shadow"
+                          onClick={() => saveEditProject(canvas.id)}
+                        >Salvar</button>
+                        <button
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium shadow"
+                          onClick={() => setEditingId(null)}
+                        >Cancelar</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to={`/project/${canvas.id}`}
+                        className="text-lg sm:text-xl font-bold text-blue-700 hover:underline mb-2 transition break-words max-w-full"
                       >
-                        Editar
-                      </button>
-                      <button
-                        title="Deletar"
-                        className="text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded transition"
-                        onClick={() => deleteProject(project.id)}
-                      >
-                        Deletar
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+                        {canvas.name}
+                      </Link>
+                      <div className="text-xs text-gray-400 mb-1 break-words max-w-full">Criado em: {new Date().toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-400 mb-2 break-words max-w-full">Proprietário: {canvas.owner.email}</div>
+                      {canvas.users && canvas.users.length > 0 && (
+                        <div className="text-xs text-gray-500 mb-4 break-words max-w-full">
+                          <span className="font-medium">Acesso compartilhado:</span>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {canvas.users
+                              .filter(user => user.id !== canvas.owner.id)
+                              .map((user, index) => (
+                                <span
+                                  key={user.id}
+                                  className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs"
+                                >
+                                  {user.email}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-2 sm:gap-3 absolute top-3 sm:top-4 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <button
+                          title="Editar"
+                          className="text-blue-500 hover:text-blue-700 font-semibold px-2 py-1 rounded transition"
+                          onClick={() => startEditProject(canvas.id, canvas.name)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          title="Deletar"
+                          className="text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded transition"
+                          onClick={() => deleteProject(canvas.id)}
+                        >
+                          Deletar
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </>

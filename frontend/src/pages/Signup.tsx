@@ -1,21 +1,37 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient, ApiError } from '../services/api';
 
 export default function Signup() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Preencha todos os campos.');
       return;
     }
-    // Simula cadastro
-    localStorage.setItem('user', JSON.stringify({ email, password }));
-    navigate('/login');
+    
+    setError('');
+    setLoading(true);
+
+    try {
+      await apiClient.register({ username: email, password });
+      // Redirecionar para login após registro bem-sucedido
+      navigate('/login');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Erro ao criar conta. Tente novamente.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,9 +58,14 @@ export default function Signup() {
         />
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          disabled={loading}
+          className={`w-full py-2 rounded transition ${
+            loading 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white`}
         >
-          Criar Conta
+          {loading ? 'Criando...' : 'Criar Conta'}
         </button>
         <p className="mt-4 text-center text-sm">
           Já tem conta?{' '}

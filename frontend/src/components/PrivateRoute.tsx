@@ -1,12 +1,12 @@
 import { Navigate } from 'react-router-dom';
+import { apiClient } from '../services/api';
 
 interface PrivateRouteProps {
   children: JSX.Element;
 }
 
 export default function PrivateRoute({ children }: PrivateRouteProps) {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (!user.email) {
+  if (!apiClient.isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
   return children;
