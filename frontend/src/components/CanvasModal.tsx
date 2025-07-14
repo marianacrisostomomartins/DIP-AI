@@ -15,7 +15,31 @@ export default function CanvasModal({
   loading = false
 }: CanvasModalProps) {
   const [value, setValue] = useState(question.answer || '');
+  const [hasUserEdited, setHasUserEdited] = useState(false);
+  const [initialQuestionId, setInitialQuestionId] = useState(question.id);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Se a question mudou para um campo diferente, resetar o estado
+  useEffect(() => {
+    if (question.id !== initialQuestionId) {
+      setValue(question.answer || '');
+      setHasUserEdited(false);
+      setInitialQuestionId(question.id);
+    }
+  }, [question.id, initialQuestionId]);
+
+  // Sincronizar o valor quando a question.answer muda, mas apenas se o usuário não editou
+  // e se ainda é o mesmo campo (mesmo ID)
+  useEffect(() => {
+    if (!hasUserEdited && question.id === initialQuestionId) {
+      setValue(question.answer || '');
+    }
+  }, [question.answer, hasUserEdited, question.id, initialQuestionId]);
+
+  const handleValueChange = (newValue: string) => {
+    setValue(newValue);
+    setHasUserEdited(true);
+  };
 
   const handleSave = () => {
     onSave(value);
@@ -60,7 +84,7 @@ export default function CanvasModal({
           <textarea
             className="w-full border border-gray-300 rounded p-3 h-40 resize-none focus:border-blue-500 focus:outline-none"
             value={value}
-            onChange={e => setValue(e.target.value)}
+            onChange={e => handleValueChange(e.target.value)}
             placeholder="Digite sua resposta aqui..."
             disabled={loading}
           />
@@ -72,7 +96,7 @@ export default function CanvasModal({
               <p className="text-sm text-green-700 italic">{question.answer_suggestion}</p>
               <button
                 className="mt-2 text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                onClick={() => setValue(question.answer_suggestion || '')}
+                onClick={() => handleValueChange(question.answer_suggestion || '')}
                 disabled={loading}
               >
                 Usar esta sugestão

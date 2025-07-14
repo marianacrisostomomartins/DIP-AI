@@ -11,7 +11,7 @@ export default function Project() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { canvasState, canvasName, loading, error, updateField, refreshCanvas, processingFields } = useCanvas(id || '');
+  const { canvasState, canvasName, loading, error, updateField, refreshCanvas, processingFields, setModalOpen } = useCanvas(id || '');
 
   useEffect(() => {
     // Verificar se o usuário ainda está autenticado
@@ -80,6 +80,7 @@ export default function Project() {
               canvasState={canvasState}
               onUpdateField={updateField}
               processingFields={processingFields}
+              setModalOpen={setModalOpen}
             />
           )}
         </div>

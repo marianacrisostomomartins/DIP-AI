@@ -10,6 +10,7 @@ export interface UseCanvasReturn {
   processingFields: Set<number>; // IDs dos campos sendo processados
   updateField: (fieldId: number, answer: string, useAsync?: boolean) => Promise<void>;
   refreshCanvas: () => Promise<void>;
+  setModalOpen: (fieldId: number | null) => void; // Nova função para reportar estado do modal
 }
 
 export function useCanvas(canvasId: string): UseCanvasReturn {
@@ -19,6 +20,17 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
   const [error, setError] = useState('');
   const [processingFields, setProcessingFields] = useState<Set<number>>(new Set());
   const [activeJobs, setActiveJobs] = useState<Map<number, string>>(new Map());
+  const [openModalFieldId, setOpenModalFieldId] = useState<number | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState(false);
+
+  // Quando o modal fecha, verificar se há atualização pendente
+  useEffect(() => {
+    if (openModalFieldId === null && pendingUpdate) {
+      console.log('Modal fechado, aplicando atualização pendente');
+      setPendingUpdate(false);
+      loadCanvasState();
+    }
+  }, [openModalFieldId, pendingUpdate]);
 
 
 
@@ -108,8 +120,13 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
       });
       
       if (job.status === 'completed') {
-        // 6. Recarregar estado final quando job completa
-        await loadCanvasState();
+        // 6. Só recarregar estado final se não houver modal aberto
+        if (openModalFieldId === null) {
+          await loadCanvasState();
+        } else {
+          console.log('Modal aberto, marcando atualização como pendente');
+          setPendingUpdate(true);
+        }
       } else if (job.status === 'failed') {
         console.error(`Job ${jobId} falhou:`, job.error);
         // Você pode adicionar uma notificação de erro aqui se necessário
@@ -149,6 +166,7 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
     error,
     processingFields,
     updateField,
-    refreshCanvas
+    refreshCanvas,
+    setModalOpen: setOpenModalFieldId
   };
 }

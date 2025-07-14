@@ -1,5 +1,5 @@
 import CanvasCard from './CanvasCard';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CanvasModal from './CanvasModal';
 import { CanvasState, FieldState } from '../types/api';
 
@@ -8,14 +8,30 @@ interface CanvasGridProps {
   canvasState: CanvasState;
   onUpdateField: (fieldId: number, answer: string, useAsync?: boolean) => Promise<void>;
   processingFields?: Set<number>;
+  setModalOpen: (fieldId: number | null) => void;
 }
 
-export default function CanvasGrid({ canvasId, canvasState, onUpdateField, processingFields = new Set() }: CanvasGridProps) {
-  const [selected, setSelected] = useState<FieldState | null>(null);
+export default function CanvasGrid({ canvasId, canvasState, onUpdateField, processingFields = new Set(), setModalOpen }: CanvasGridProps) {
+  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
   const [updating, setUpdating] = useState(false);
 
   // Usar os fields do CanvasState
   const canvasFields = canvasState?.fields || [];
+  
+  // Encontrar o field selecionado atual (pode ter mudado com a atualização do estado)
+  const selected = selectedFieldId ? canvasFields.find(field => field.id === selectedFieldId) || null : null;
+
+  // Verificar se o campo selecionado ainda existe após atualizações
+  useEffect(() => {    
+    // Notificar o hook sobre o estado do modal
+    setModalOpen(selectedFieldId);
+    
+    if (selectedFieldId && !selected) {
+      console.warn(`Campo selecionado ${selectedFieldId} não foi encontrado após atualização. Fechando modal.`);
+      setSelectedFieldId(null);
+      setModalOpen(null);
+    }
+  }, [selectedFieldId, selected, canvasFields.length, setModalOpen]);
 
   const handleSave = async (value: string) => {
     if (!selected) return;
@@ -23,7 +39,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
     try {
       setUpdating(true);
       await onUpdateField(selected.id, value, true); // Use async by default
-      setSelected(null);
+      setSelectedFieldId(null);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Erro ao salvar');
     } finally {
@@ -49,7 +65,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
             <div key={field.id}>
               <CanvasCard
                 field={field}
-                onClick={() => setSelected(field)}
+                onClick={() => setSelectedFieldId(field.id)}
                 isProcessing={isProcessing}
               />
             </div>
@@ -58,9 +74,13 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
       </div>
       {selected && (
         <CanvasModal
+          key={selectedFieldId} // Key estável baseada no ID
           question={selected}
           onSave={handleSave}
-          onClose={() => setSelected(null)}
+          onClose={() => {
+            setSelectedFieldId(null);
+            setModalOpen(null);
+          }}
           loading={updating}
         />
       )}
