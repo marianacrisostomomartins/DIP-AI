@@ -50,14 +50,7 @@ export default function Login() {
           value={password}
           onChange={e => setPassword(e.target.value)}
         />
-        <div className="flex justify-end mb-6">
-          <span
-            className="text-blue-600 hover:underline text-sm cursor-pointer"
-            onClick={() => navigate('/recuperar-senha')}
-          >
-            Esqueceu a senha?
-          </span>
-        </div>
+        {/* Esqueceu a senha removido */}
         <button
           type="submit"
           disabled={loading}

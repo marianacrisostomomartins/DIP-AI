@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { Pen, Trash } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { apiClient, ApiError } from '../services/api';
@@ -187,20 +188,22 @@ export default function Home() {
                     {canvas.owner.email === currentUserEmail && (
                       <button
                         title="Editar"
-                        className="text-blue-500 hover:text-blue-700 font-semibold px-2 py-1 rounded transition"
+                        className="text-blue-500 hover:text-blue-700 font-semibold px-2 py-1 rounded transition flex items-center gap-1"
                         onClick={() => startEditProject(canvas.id, canvas.name)}
                       >
-                        Editar
+                        <Pen size={16} className="inline-block" />
+                        <span className="hidden sm:inline"></span>
                       </button>
                     )}
                     {/* Só mostra botão de deletar se o usuário for o dono */}
                     {canvas.owner.email === currentUserEmail && (
                       <button
                         title="Deletar"
-                        className="text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded transition"
+                        className="text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded transition flex items-center gap-1"
                         onClick={() => deleteProject(canvas.id)}
                       >
-                        Deletar
+                        <Trash size={16} className="inline-block" />
+                        <span className="hidden sm:inline"></span>
                       </button>
                     )}
                   </div>

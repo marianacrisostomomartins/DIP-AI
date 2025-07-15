@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Save, Download, Share2 } from 'lucide-react';
+import { Home, Download, Share2 } from 'lucide-react';
 
 export default function Sidebar() {
   const [showShareModal, setShowShareModal] = useState(false);
