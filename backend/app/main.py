@@ -110,6 +110,35 @@ async def delete_canvas(canvas_id: str, current_user: User = Depends(get_current
     
     return True
 
+@app.put("/canvas/edit/{canvas_id}")
+async def edit_canvas(canvas_id: str, name: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
+    canvas_orm = await db.get(CanvasORM, canvas_id)
+    
+    if not canvas_orm:
+        raise HTTPException(status_code=404, detail="Canvas não encontrado")
+    
+    # Verificar se o usuário atual é o dono do canvas
+    if str(canvas_orm.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Apenas o proprietário pode editar o canvas")
+    
+    # Verificar se já existe um canvas com o mesmo nome para o usuário (exceto o atual)
+    result = await db.execute(
+        select(CanvasORM)
+        .where(
+            CanvasORM.name == name,
+            CanvasORM.owner_id == current_user.id,
+            CanvasORM.id != canvas_id
+        )
+    )
+    if result.scalars().first():
+        raise HTTPException(status_code=409, detail=f"Canvas \"{name}\" já existe")
+    
+    # Atualizar o nome do canvas
+    canvas_orm.name = name
+    await db.commit()
+    
+    return True
+
 @app.get("/list_canvas", response_model=List[Canvas])
 async def list_canvas(current_user: User = Depends(get_current_user), db=Depends(get_db)):
     canvas_orm = await db.execute(
