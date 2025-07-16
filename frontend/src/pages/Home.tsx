@@ -74,8 +74,7 @@ export default function Home() {
 
   const saveEditProject = async (id: string) => {
     try {
-      // TODO: Implementar endpoint de update canvas name no backend
-      // Por enquanto, apenas atualizar localmente
+      await apiClient.editCanvas(id, editName);
       setCanvases(prev => 
         prev.map(canvas => 
           canvas.id === id ? { ...canvas, name: editName } : canvas
@@ -84,6 +83,7 @@ export default function Home() {
       setEditingId(null);
       setEditName('');
     } catch (err) {
+      console.error('Erro ao salvar alterações:', err);
       alert('Erro ao salvar alterações');
     }
   };

@@ -158,6 +158,15 @@ class ApiClient {
     return this.handleResponse<boolean>(response);
   }
 
+  async editCanvas(canvasId: string, name: string): Promise<boolean> {
+    const response = await fetch(`${API_BASE_URL}/canvas/edit/${canvasId}?name=${encodeURIComponent(name)}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders()
+    });
+
+    return this.handleResponse<boolean>(response);
+  }
+
   async getCanvasState(canvasId: string): Promise<CanvasStateResponse> {
     const response = await fetch(`${API_BASE_URL}/canvas/state/${canvasId}`, {
       method: 'GET',
