@@ -40,7 +40,7 @@ export default function Project() {
 
   return (
     <div className="flex">
-      <Sidebar canvasId={id} />
+      <Sidebar canvasId={id} canvasState={canvasState} canvasName={canvasName} />
       <div className="flex-1 ml-48">
         <Header 
           title={canvasName || `Canvas #${id}`} 

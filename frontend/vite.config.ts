@@ -9,5 +9,19 @@ export default defineConfig({
     fs: {
       allow: ['.'],
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router', 'react-router-dom'],
+          'pdf-core': ['jspdf'],
+          'canvas-utils': ['html2canvas'],
+          icons: ['lucide-react']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600
   }
 });

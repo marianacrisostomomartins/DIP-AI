@@ -2,13 +2,19 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Download, Share2 } from 'lucide-react';
 import { apiClient } from '../services/api';
+import ExportModal from './ExportModal';
+import { ExportService } from '../services/exportService';
+import { CanvasState } from '../types/api';
 
 interface SidebarProps {
   canvasId?: string;
+  canvasState?: CanvasState | null;
+  canvasName?: string;
 }
 
-export default function Sidebar({ canvasId }: SidebarProps) {
+export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarProps) {
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [shareMessage, setShareMessage] = useState('');
   const [shareMessageType, setShareMessageType] = useState<'success' | 'error' | ''>('');
@@ -70,7 +76,20 @@ export default function Sidebar({ canvasId }: SidebarProps) {
     }
   };
 
+  const handleExport = () => {
+    setShowExportModal(true);
+  };
+
+  const handleExportSubmit = async (format: 'pdf' | 'json') => {
+    if (!canvasState || !canvasName) {
+      throw new Error('Dados do canvas não disponíveis para exportação.');
+    }
+
+    await ExportService.exportCanvas(canvasState, canvasName, { format });
+  };
+
   const closeShareModal = () => setShowShareModal(false);
+  const closeExportModal = () => setShowExportModal(false);
 
   // Fecha o modal ao pressionar ESC ou clicar fora
   useEffect(() => {
@@ -104,7 +123,7 @@ export default function Sidebar({ canvasId }: SidebarProps) {
               <Share2 size={18} />
               <span>Compartilhar</span>
             </button>
-            <button className="flex items-center gap-3 hover:text-blue-400 transition-colors">
+            <button className="flex items-center gap-3 hover:text-blue-400 transition-colors" onClick={handleExport}>
               <Download size={18} />
               <span>Exportar</span>
             </button>
@@ -151,6 +170,14 @@ export default function Sidebar({ canvasId }: SidebarProps) {
           </div>
         </div>
       )}
+      
+      {/* Modal de Exportação */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={closeExportModal}
+        onExport={handleExportSubmit}
+        canvasName={canvasName || 'Canvas'}
+      />
     </aside>
   );
 }

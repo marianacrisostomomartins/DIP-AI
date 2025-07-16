@@ -58,7 +58,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+      <div className="canvas-grid grid grid-cols-2 md:grid-cols-4 gap-4 mt-4" data-canvas-grid>
         {canvasFields.map((field) => {
           const isProcessing = processingFields.has(field.id);
           return (
