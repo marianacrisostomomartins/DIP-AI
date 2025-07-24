@@ -2,14 +2,6 @@
 
 Esta aplicação implementa um backend em Python (FastAPI) para conduzir entrevistas via LLM, auxiliando o usuário a preencher um Canvas de 28 campos (DIP‑AI). Usa Ollama como provedor de LLM e orquestra a lógica de perguntas/respostas com LangGraph.
 
-## Estrutura do projeto [TODO]
-
-- `app/main.py`: servidor FastAPI com rotas REST e WebSocket.
-- `app/state.py`: modelos Pydantic para Canvas e estado.
-- `app/llm_client.py`: cliente Ollama HTTP.
-- `app/prompts/update_sugestions`: prompt para atualizar as sugestões de resposta e pergunta.
-- `requirements.txt`: dependências.
-
 ## Criando BD - PostgreSQL (caso não exista)
 
 ```bash

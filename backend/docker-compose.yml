@@ -1,0 +1,32 @@
+services:
+  backend:
+    build: .
+    container_name: dip-ai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - dip-ai-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: dip-ai-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-ssl.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/ssl
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - dip-ai-network
+
+networks:
+  dip-ai-network:
+    driver: bridge
