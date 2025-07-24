@@ -2,32 +2,6 @@
 
 Interface web para o sistema DIP-AI Canvas, desenvolvida em React + TypeScript + Tailwind CSS.
 
-## Funcionalidades Implementadas
-
-### Autenticação
-- ✅ Login com email/senha
-- ✅ Registro de novos usuários
-- ✅ Proteção de rotas privadas
-- ✅ Sistema de tokens JWT
-- ✅ Logout automático
-
-### Gerenciamento de Canvas
-- ✅ Listagem de canvas do usuário
-- ✅ Criação de novos canvas
-- ✅ Exclusão de canvas (apenas proprietário)
-- ✅ Navegação entre canvas
-- 🔄 Edição do nome do canvas (pendente no backend)
-- 🔄 Compartilhamento com outros usuários
-
-### Canvas DIP-AI
-- ✅ Grid interativo com campos do canvas
-- ✅ Modal para edição de campos
-- ✅ Processamento assíncrono com LLM
-- ✅ Sugestões automáticas do sistema
-- ✅ Polling de status dos jobs
-- ✅ Estados visuais (preenchido/vazio)
-- ✅ Loading states durante processamento
-
 ## Integração com Backend
 
 ### Rotas da API Integradas
@@ -49,20 +23,7 @@ O `useCanvas` hook centraliza a lógica de:
 - Polling automático de jobs
 - Gerenciamento de estados de loading/error
 
-## Tecnologias Utilizadas
-
-- **React 18** - Framework principal
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Estilização
-- **React Router DOM** - Roteamento
-- **Vite** - Build tool e dev server
-
 ## Como executar
-
-### Pré-requisitos
-- Node.js 18+
-- npm ou yarn
-- Backend DIP-AI executando em `http://localhost:8000`
 
 ### Instalação
 ```bash
@@ -85,75 +46,107 @@ Edite o arquivo `.env` com as configurações necessárias:
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## Estrutura do Projeto
+## Deploy em Produção
 
-```
-src/
-├── components/          # Componentes reutilizáveis
-│   ├── CanvasCard.tsx   # Card individual do canvas
-│   ├── CanvasGrid.tsx   # Grid de campos do canvas
-│   ├── CanvasModal.tsx  # Modal de edição
-│   ├── Header.tsx       # Cabeçalho da aplicação
-│   ├── PrivateRoute.tsx # Proteção de rotas
-│   └── Sidebar.tsx      # Barra lateral
-├── hooks/               # Hooks personalizados
-│   └── useCanvas.ts     # Hook para gerenciar canvas
-├── pages/               # Páginas da aplicação
-│   ├── Home.tsx         # Lista de canvas
-│   ├── Login.tsx        # Página de login
-│   ├── Project.tsx      # Visualização do canvas
-│   ├── Signup.tsx       # Registro de usuário
-│   ├── NotFound.tsx     # Página 404
-│   └── RecuperarSenha.tsx # Recuperação de senha
-├── services/            # Serviços externos
-│   └── api.ts           # Cliente da API REST
-├── types/               # Definições de tipos
-│   └── api.ts           # Tipos da API
-└── styles/              # Estilos globais
-    └── index.css        # CSS principal com Tailwind
+### 1. Preparação do Servidor
+```bash
+# Clonar o repositório
+git clone https://github.com/marianacrisostomomartins/DIP-AI.git
+cd DIP-AI/frontend
+
+# Configurar variáveis de ambiente
+cp .env.example .env
+nano .env
 ```
 
-## Fluxo de Dados
+### 2. Deploy Simples
+```bash
+# Deploy apenas do frontend
+docker-compose up -d frontend
 
-### Autenticação
-1. Usuário faz login → Token JWT armazenado no localStorage
-2. Requests incluem `Authorization: Bearer <token>`
-3. PrivateRoute verifica token antes de renderizar páginas protegidas
+# Verificar saúde da aplicação
+curl http://localhost:8080/health
+```
 
-### Canvas Workflow
-1. Usuário carrega canvas → `useCanvas` busca estado inicial
-2. Usuário edita campo → Modal abre com dados atuais
-3. Usuário salva → Request assíncrono enviado
-4. Sistema inicia polling do job → Atualiza estado quando completo
-5. Interface mostra sugestões LLM quando disponíveis
+### 3. Deploy com Proxy Reverso e SSL
+```bash
+# Configurar variáveis de ambiente para produção
+export VIRTUAL_HOST=seudominio.com
+export LETSENCRYPT_HOST=seudominio.com
+export LETSENCRYPT_EMAIL=seu-email@exemplo.com
 
-### Estados da Interface
-- **Loading**: Durante carregamento inicial ou processamento
-- **Error**: Em caso de falhas na API com retry
-- **Success**: Estado normal com dados carregados
-- **Processing**: Durante atualização de campos com LLM
+# Deploy completo com proxy e SSL
+docker-compose --profile production up -d frontend
 
-## Próximos Passos
+# Verificar todos os serviços
+docker-compose ps
+```
 
-### Funcionalidades Pendentes
-- [ ] Implementar recuperação de senha
-- [ ] Melhorar sistema de compartilhamento
-- [ ] Adicionar notificações em tempo real
-- [ ] Implementar cache local dos canvas
-- [ ] Adicionar modo offline básico
-- [ ] Melhorar acessibilidade (ARIA labels)
+### Atualizações
 
-### Melhorias Técnicas
-- [ ] Implementar React Query para cache
-- [ ] Adicionar testes unitários (Jest + Testing Library)
-- [ ] Configurar CI/CD pipeline
-- [ ] Adicionar linting mais rigoroso
-- [ ] Implementar lazy loading de rotas
-- [ ] Configurar PWA capabilities
+#### Atualizar a aplicação
+```bash
+# Baixar últimas mudanças
+git pull origin main
 
-### UX/UI
-- [ ] Adicionar skeleton loaders
-- [ ] Implementar animações de transição
-- [ ] Melhorar responsividade mobile
-- [ ] Adicionar tema escuro
-- [ ] Implementar drag & drop nos cards
+# Rebuild e redeploy
+docker-compose build frontend
+docker-compose up -d frontend
+```
+
+#### Rebuild completo
+```bash
+# Parar todos os serviços
+docker-compose down
+
+# Rebuild sem cache
+docker-compose build --no-cache
+
+# Deploy novamente
+docker-compose up -d
+```
+
+### Monitoramento
+
+#### Verificar status
+```bash
+# Status dos containers
+docker-compose ps
+
+# Logs em tempo real
+docker-compose logs -f
+
+# Logs apenas do frontend
+docker-compose logs -f frontend
+
+# Verificar recursos
+docker stats
+```
+
+#### Health Check
+```bash
+# Verificar saúde da aplicação
+curl http://localhost:8080/health
+
+# Ou para produção com domínio
+curl https://seudominio.com/health
+```
+
+### Comandos Úteis
+
+```bash
+# Verificar status
+docker-compose ps
+
+# Logs em tempo real
+docker-compose logs -f
+
+# Restart apenas frontend
+docker-compose restart frontend
+
+# Backup da configuração
+docker-compose config > backup-config.yml
+
+# Cleanup
+docker-compose down --volumes --remove-orphans
+```
