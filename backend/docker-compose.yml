@@ -8,6 +8,8 @@ services:
       - PYTHONPATH=/app
     env_file:
       - .env
+    extra_hosts:
+      - "postgres:host-gateway"
     restart: unless-stopped
     networks:
       - dip-ai-network
