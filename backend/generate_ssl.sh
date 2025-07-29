@@ -10,6 +10,6 @@ openssl genrsa -out /app/ssl/private.key 2048
 
 # Gerar certificado auto-assinado válido por 365 dias
 openssl req -new -x509 -key /app/ssl/private.key -out /app/ssl/certificate.crt -days 365 \
-    -subj "/C=BR/ST=State/L=City/O=Organization/CN=186.213.212.140"
+    -subj "/C=BR/ST=State/L=City/O=Organization/CN=191.25.235.57"
 
 echo "Certificados SSL gerados em /app/ssl/"

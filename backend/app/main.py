@@ -26,7 +26,9 @@ app.add_middleware(
         "http://127.0.0.1:5173", 
         "http://localhost:3000",
         "https://dip-ai.vercel.app",  # Frontend em produção
-        "https://*.vercel.app"  # Wildcard para outros deploys do Vercel
+        "https://distinctly-top-flamingo.ngrok-free.app",  # ngrok URL específica
+        "https://*.ngrok-free.app",  # Wildcard para ngrok
+        "https://*.ngrok.io"  # Wildcard para ngrok (domínio antigo)
     ],
     allow_credentials=True,
     allow_methods=["*"],
