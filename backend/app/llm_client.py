@@ -1,5 +1,6 @@
 import ollama
 import re
+import os
 
 # Model configurations
 MODEL_NAME = "deepseek-r1:14b" # "gemma3:12b" "deepseek-r1:14b"
@@ -10,10 +11,13 @@ MODEL_OPTIONS = {
     "timeout": 300,
 }
 
+# Ollama host configuration
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+
 class LLMClient:
     @staticmethod
     async def ask(prompt: str) -> str:
-        client = ollama.AsyncClient()
+        client = ollama.AsyncClient(host=OLLAMA_HOST)
         # Prepare the payload for the request
         payload = {
             "model": MODEL_NAME,

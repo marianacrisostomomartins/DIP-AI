@@ -6,10 +6,12 @@ services:
       - "8000:8000"
     environment:
       - PYTHONPATH=/app
+      - OLLAMA_HOST=http://host.docker.internal:11434
     env_file:
       - .env
     extra_hosts:
       - "postgres:host-gateway"
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
       - dip-ai-network
