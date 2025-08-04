@@ -1,5 +1,6 @@
 
 import { FieldState } from '../types/api';
+import { Award, Briefcase, LineChart } from 'lucide-react';
 
 interface CanvasCardProps {
   field: FieldState;
@@ -59,6 +60,26 @@ export default function CanvasCard({ field, onClick, isProcessing = false }: Can
     return 'text-gray-400';
   };
 
+  // Função para determinar quais ícones mostrar
+  const getRoleIcons = (id: number) => {
+    const iconClasses = "w-4 h-4";
+    if (id >= 1 && id <= 6) {
+      return <Briefcase className={iconClasses} />;
+    } else if (id >= 7 && id <= 12) {
+      return (
+        <div className="flex items-center gap-1">
+          <Briefcase className={iconClasses} />
+          <Award className={iconClasses} />
+        </div>
+      );
+    } else if (id >= 13 && id <= 16) {
+      return <Briefcase className={iconClasses} />;
+    } else if (id >= 17 && id <= 28) {
+      return <LineChart className={iconClasses} />;
+    }
+    return null;
+  };
+
   return (
     <div
       className={`
@@ -68,12 +89,17 @@ export default function CanvasCard({ field, onClick, isProcessing = false }: Can
       onClick={onClick}
     >
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-md text-gray-800 truncate">{field.id} - {field.title}</h3>
-        {filled && (
-          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-            isProcessing ? 'bg-yellow-500 animate-pulse' : getIndicatorColor(field.id)
-          }`} />
-        )}
+        <h3 className="font-semibold text-md text-gray-800 truncate flex-1">{field.id} - {field.title}</h3>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center">
+            {getRoleIcons(field.id)}
+          </div>
+          {filled && (
+            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+              isProcessing ? 'bg-yellow-500 animate-pulse' : getIndicatorColor(field.id)
+            }`} />
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden space-y-2">

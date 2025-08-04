@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Download, Share2 } from 'lucide-react';
+import { Home, Download, Share2, Award, Briefcase, LineChart } from 'lucide-react';
 import { apiClient } from '../services/api';
 import ExportModal from './ExportModal';
 import { ExportService } from '../services/exportService';
@@ -111,25 +111,50 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
   }, [showShareModal]);
 
   return (
-    <aside className="w-48 bg-gray-900 text-white h-screen p-4 fixed z-40">
-      <nav className="flex flex-col space-y-4">
-        <Link to="/" className="flex items-center gap-3 hover:text-blue-400 transition-colors mb-6">
-          <Home size={30} />
-          <span className="text-xl font-medium">Projetos</span>
-        </Link>
-        {isProjectPage && canvasId && (
-          <>
-          <button className="flex items-center gap-3 hover:text-blue-400 transition-colors" onClick={handleShare}>
-              <Share2 size={18} />
-              <span>Compartilhar</span>
-            </button>
-            <button className="flex items-center gap-3 hover:text-blue-400 transition-colors" onClick={handleExport}>
-              <Download size={18} />
-              <span>Exportar</span>
-            </button>
-          </>
-        )}
-      </nav>
+    <aside className="w-48 bg-gray-900 text-white h-screen p-4 fixed z-40 flex flex-col">
+      <div className="flex-1">
+        <nav className="flex flex-col">
+          <Link to="/" className="flex items-center gap-3 hover:text-blue-400 transition-colors mb-6">
+            <Home size={30} />
+            <span className="text-xl font-medium">Projetos</span>
+          </Link>
+
+          {/* Glossário */}
+          <div className="mt-2 mb-6">
+            <h3 className="text-sm font-semibold mb-3 text-gray-400 uppercase">Glossário</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Briefcase size={16} />
+                <span>Business Owner</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Award size={16} />
+                <span>Expert</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <LineChart size={16} />
+                <span>Cientista de Dados</span>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      {/* Botões de ação */}
+      {isProjectPage && canvasId && (
+        <div className="space-y-4">
+          <button className="flex items-center gap-3 hover:text-blue-400 transition-colors w-full" onClick={handleExport}>
+            <Download size={18} />
+            <span>Exportar</span>
+          </button>
+          <button className="flex items-center gap-3 hover:text-blue-400 transition-colors w-full" onClick={handleShare}>
+            <Share2 size={18} />
+            <span>Compartilhar</span>
+          </button>
+        </div>
+      )}
+
+      {/* Modal de Compartilhamento */}
       {showShareModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div ref={modalRef} className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md text-gray-900">
