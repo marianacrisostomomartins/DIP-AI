@@ -133,8 +133,8 @@ class ApiClient {
   }
 
   // Canvas endpoints
-  async createCanvas(name: string): Promise<Canvas> {
-    const response = await fetch(`${API_BASE_URL}/create_canvas?name=${encodeURIComponent(name)}`, {
+  async createCanvas(name: string, language: string = 'pt'): Promise<Canvas> {
+    const response = await fetch(`${API_BASE_URL}/create_canvas?name=${encodeURIComponent(name)}&language=${language}`, {
       method: 'POST',
       headers: this.getAuthHeaders()
     });
@@ -169,8 +169,8 @@ class ApiClient {
     return this.handleResponse<boolean>(response);
   }
 
-  async getCanvasState(canvasId: string): Promise<CanvasStateResponse> {
-    const response = await fetch(`${API_BASE_URL}/canvas/state/${canvasId}`, {
+  async getCanvasState(canvasId: string, language: string = 'pt'): Promise<CanvasStateResponse> {
+    const response = await fetch(`${API_BASE_URL}/canvas/state/${canvasId}?language=${language}`, {
       method: 'GET',
       headers: this.getAuthHeaders()
     });

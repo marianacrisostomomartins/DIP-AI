@@ -5,6 +5,7 @@ import { apiClient } from '../services/api';
 import ExportModal from './ExportModal';
 import { ExportService } from '../services/exportService';
 import { CanvasState } from '../types/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SidebarProps {
   canvasId?: string;
@@ -13,6 +14,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarProps) {
+  const { t } = useLanguage();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
@@ -40,13 +42,13 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
   const handleShareSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shareEmail || !canvasId) {
-      setShareMessage('Digite um e-mail válido.');
+      setShareMessage(t('sidebar.validEmail'));
       setShareMessageType('error');
       return;
     }
 
     if (!validateEmail(shareEmail)) {
-      setShareMessage('Por favor, digite um e-mail válido.');
+      setShareMessage(t('sidebar.pleaseValidEmail'));
       setShareMessageType('error');
       return;
     }
@@ -57,7 +59,7 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
 
     try {
       await apiClient.inviteUser(canvasId, shareEmail);
-      setShareMessage(`Projeto compartilhado com sucesso com ${shareEmail}!`);
+      setShareMessage(`${t('sidebar.userInvited')} ${shareEmail}!`);
       setShareMessageType('success');
       setShareEmail('');
       
@@ -68,7 +70,7 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
       }, 3000);
     } catch (error: any) {
       console.error('Erro ao compartilhar projeto:', error);
-      const errorMessage = error.message || 'Erro ao compartilhar projeto. Tente novamente.';
+      const errorMessage = error.message || t('sidebar.shareError');
       setShareMessage(errorMessage);
       setShareMessageType('error');
     } finally {
@@ -116,24 +118,24 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
         <nav className="flex flex-col">
           <Link to="/" className="flex items-center gap-3 hover:text-blue-400 transition-colors mb-6">
             <Home size={30} />
-            <span className="text-xl font-medium">Projetos</span>
+            <span className="text-xl font-medium">{t('sidebar.backToHome')}</span>
           </Link>
 
           {/* Glossário */}
           <div className="mt-2 mb-6">
-            <h3 className="text-sm font-semibold mb-3 text-gray-400 uppercase">Glossário</h3>
+            <h3 className="text-sm font-semibold mb-3 text-gray-400 uppercase">{t('sidebar.glossary')}</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
                 <Briefcase size={16} />
-                <span>Business Owner</span>
+                <span>{t('sidebar.businessOwner')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Award size={16} />
-                <span>Expert</span>
+                <span>{t('sidebar.expert')}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <LineChart size={16} />
-                <span>Cientista de Dados</span>
+                <span>{t('sidebar.dataScientist')}</span>
               </div>
             </div>
           </div>
@@ -145,11 +147,11 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
         <div className="space-y-4">
           <button className="flex items-center gap-3 hover:text-blue-400 transition-colors w-full" onClick={handleExport}>
             <Download size={18} />
-            <span>Exportar</span>
+            <span>{t('sidebar.export')}</span>
           </button>
           <button className="flex items-center gap-3 hover:text-blue-400 transition-colors w-full" onClick={handleShare}>
             <Share2 size={18} />
-            <span>Compartilhar</span>
+            <span>{t('sidebar.share')}</span>
           </button>
         </div>
       )}
@@ -158,11 +160,11 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
       {showShareModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div ref={modalRef} className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md text-gray-900">
-            <h2 className="text-xl font-bold mb-4">Compartilhar Projeto</h2>
+            <h2 className="text-xl font-bold mb-4">{t('sidebar.shareProject')}</h2>
             <form onSubmit={handleShareSubmit} className="mb-4 space-y-4">
               <input
                 type="email"
-                placeholder="E-mail do usuário"
+                placeholder={t('sidebar.userEmail')}
                 value={shareEmail}
                 onChange={e => setShareEmail(e.target.value)}
                 className="w-full border rounded px-3 py-2"
@@ -174,7 +176,7 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
                 disabled={isSharing}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full disabled:opacity-50"
               >
-                {isSharing ? 'Compartilhando...' : 'Compartilhar'}
+                {isSharing ? t('sidebar.sharing') : t('sidebar.share')}
               </button>
             </form>
             {shareMessage && (
@@ -186,11 +188,11 @@ export default function Sidebar({ canvasId, canvasState, canvasName }: SidebarPr
                 {shareMessage}
               </p>
             )}
-            <button
+                        <button
               onClick={closeShareModal}
               className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 w-full"
             >
-              Fechar
+              {t('sidebar.close')}
             </button>
           </div>
         </div>

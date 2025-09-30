@@ -1,11 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../contexts/LanguageContext';
 import { ReactNode } from 'react';
+import LanguageSelector from './LanguageSelector';
 
 export default function Header({ title, statusIndicator }: { title: string; statusIndicator?: ReactNode }) {
   const navigate = useNavigate();
   const { logout, getCurrentUserEmail } = useAuth();
+  const { t } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
   const userEmail = getCurrentUserEmail();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -15,7 +18,7 @@ export default function Header({ title, statusIndicator }: { title: string; stat
   };
 
   const handleDeleteAccount = () => {
-    if (window.confirm('Tem certeza que deseja deletar sua conta?')) {
+    if (window.confirm(t('modal.deleteConfirm'))) {
       logout();
       navigate('/signup');
     }
@@ -49,6 +52,7 @@ export default function Header({ title, statusIndicator }: { title: string; stat
             {statusIndicator}
           </div>
         )}
+        <LanguageSelector />
         <div className="flex items-center gap-4">
           {userEmail && (
             <div className="relative" ref={menuRef}>
@@ -63,11 +67,11 @@ export default function Header({ title, statusIndicator }: { title: string; stat
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     onClick={handleLogout}
-                  >Logout</button>
+                  >{t('header.logout')}</button>
                   <button
                     className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
                     onClick={handleDeleteAccount}
-                  >Deletar Conta</button>
+                  >{t('header.deleteAccount')}</button>
                 </div>
               )}
             </div>

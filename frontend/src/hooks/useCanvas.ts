@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient, ApiError } from '../services/api';
 import { CanvasState, FieldState } from '../types/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export interface UseCanvasReturn {
   canvasState: CanvasState | null;
@@ -14,6 +15,7 @@ export interface UseCanvasReturn {
 }
 
 export function useCanvas(canvasId: string): UseCanvasReturn {
+  const { language } = useLanguage();
   const [canvasState, setCanvasState] = useState<CanvasState | null>(null);
   const [canvasName, setCanvasName] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -25,20 +27,23 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
 
   // Quando o modal fecha, verificar se há atualização pendente
   useEffect(() => {
-    if (openModalFieldId === null && pendingUpdate) {
-      console.log('Modal fechado, aplicando atualização pendente');
-      setPendingUpdate(false);
+    if (canvasId) {
       loadCanvasState();
     }
-  }, [openModalFieldId, pendingUpdate]);
+  }, [canvasId]);
 
-
+  // Recarregar quando o idioma mudar
+  useEffect(() => {
+    if (canvasId && canvasState) {
+      loadCanvasState();
+    }
+  }, [language]);
 
   const loadCanvasState = async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await apiClient.getCanvasState(canvasId);
+      const response = await apiClient.getCanvasState(canvasId, language);
       setCanvasState(response.canvas_state);
       setCanvasName(response.name);
     } catch (err) {
@@ -157,7 +162,7 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
     if (canvasId) {
       loadCanvasState();
     }
-  }, [canvasId]);
+  }, [canvasId, language]); // Recarregar quando o idioma mudar
 
   return {
     canvasState,

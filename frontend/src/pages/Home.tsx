@@ -5,10 +5,12 @@ import Header from '../components/Header';
 import { apiClient, ApiError } from '../services/api';
 import { Canvas } from '../types/api';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Home() {
   const navigate = useNavigate();
   const { isAuthenticated, getCurrentUserEmail } = useAuth();
+  const { t, language } = useLanguage();
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -47,11 +49,11 @@ export default function Home() {
   };
 
   const createNewProject = async () => {
-    const name = prompt('Nome do novo projeto:');
+    const name = prompt(t('home.newCanvasName'));
     if (!name) return;
     
     try {
-      const newCanvas = await apiClient.createCanvas(name);
+      const newCanvas = await apiClient.createCanvas(name, language);
       setCanvases(prev => [...prev, newCanvas]);
       navigate(`/project/${newCanvas.id}`);
     } catch (err) {
@@ -62,7 +64,7 @@ export default function Home() {
         }
         alert(err.message);
       } else {
-        alert('Erro ao criar projeto');
+        alert(t('message.error'));
       }
     }
   };
@@ -105,13 +107,13 @@ export default function Home() {
                 onClick={createNewProject}
                 className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto justify-center"
               >
-                <span className="text-xl">+</span> Novo Projeto
+                <span className="text-xl">+</span> {t('home.createCanvas')}
               </button>
             )}
           </div>
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <p className="text-gray-500">
-              {showCreateButton ? 'Você ainda não criou nenhum projeto.' : 'Nenhum projeto compartilhado encontrado.'}
+              {showCreateButton ? t('home.createFirst') : t('home.noCanvas')}
             </p>
           </div>
         </div>
@@ -127,7 +129,7 @@ export default function Home() {
               onClick={createNewProject}
               className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto justify-center"
             >
-              <span className="text-xl">+</span> Novo Projeto
+              <span className="text-xl">+</span> {t('home.createCanvas')}
             </button>
           )}
         </div>
@@ -149,11 +151,11 @@ export default function Home() {
                     <button
                       className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium shadow"
                       onClick={() => saveEditProject(canvas.id)}
-                    >Salvar</button>
+                    >{t('canvas.save')}</button>
                     <button
                       className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium shadow"
                       onClick={() => setEditingId(null)}
-                    >Cancelar</button>
+                    >{t('canvas.cancel')}</button>
                   </div>
                 </>
               ) : (
@@ -164,11 +166,10 @@ export default function Home() {
                   >
                     {canvas.name}
                   </Link>
-                  <div className="text-xs text-gray-400 mb-1 break-words max-w-full">Criado em: {new Date().toLocaleDateString()}</div>
-                  <div className="text-xs text-gray-400 mb-2 break-words max-w-full">Proprietário: {canvas.owner.email}</div>
+                  <div className="text-xs text-gray-400 mb-2 break-words max-w-full">{canvas.owner.email}</div>
                   {canvas.users && canvas.users.length > 0 && (
                     <div className="text-xs text-gray-500 mb-4 break-words max-w-full">
-                      <span className="font-medium">Acesso compartilhado:</span>
+                      <span className="font-medium">{t('home.sharedWith')}:</span>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {canvas.users
                           .filter(user => user.id !== canvas.owner.id)
@@ -187,7 +188,7 @@ export default function Home() {
                     {/* Só mostra botão de editar se o usuário for o dono */}
                     {canvas.owner.email === currentUserEmail && (
                       <button
-                        title="Editar"
+                        title={t('home.edit')}
                         className="text-blue-500 hover:text-blue-700 font-semibold px-2 py-1 rounded transition flex items-center gap-1"
                         onClick={() => startEditProject(canvas.id, canvas.name)}
                       >
@@ -198,7 +199,7 @@ export default function Home() {
                     {/* Só mostra botão de deletar se o usuário for o dono */}
                     {canvas.owner.email === currentUserEmail && (
                       <button
-                        title="Deletar"
+                        title={t('home.delete')}
                         className="text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded transition flex items-center gap-1"
                         onClick={() => deleteProject(canvas.id)}
                       >
@@ -217,7 +218,7 @@ export default function Home() {
   };
 
   const deleteProject = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja deletar este projeto?')) return;
+    if (!window.confirm(t('modal.deleteConfirm'))) return;
     
     try {
       await apiClient.deleteCanvas(id);
@@ -230,23 +231,23 @@ export default function Home() {
         }
         alert(err.message);
       } else {
-        alert('Erro ao deletar projeto');
+        alert(t('message.error'));
       }
     }
   };
 
   return (
     <>
-      <Header title="Meus Projetos" />
+      <Header title={t('home.title')} />
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 flex flex-col items-center py-6 px-2 sm:px-4 md:px-8">
         <div className="w-full max-w-5xl">
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight text-center">Projetos</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight text-center">{t('home.subTitle')}</h1>
           </div>
           
           {loading && (
             <div className="text-center py-8">
-              <p className="text-gray-600">Carregando projetos...</p>
+              <p className="text-gray-600">{t('home.loading')}</p>
             </div>
           )}
           
@@ -265,10 +266,10 @@ export default function Home() {
           {!loading && !error && (
             <>
               {/* Seção Meus Projetos */}
-              {renderProjectSection(myCanvases, "Meus Projetos", true)}
+              {renderProjectSection(myCanvases, t('home.title'), true)}
               
               {/* Seção Projetos Compartilhados */}
-              {renderProjectSection(sharedCanvases, "Projetos Compartilhados")}
+              {renderProjectSection(sharedCanvases, t('home.sharedWithMe'))}
             </>
           )}
         </div>

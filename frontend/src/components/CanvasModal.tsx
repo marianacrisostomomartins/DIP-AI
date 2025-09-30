@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FieldState } from '../types/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface CanvasModalProps {
   question: FieldState;
@@ -14,6 +15,7 @@ export default function CanvasModal({
   onClose,
   loading = false
 }: CanvasModalProps) {
+  const { t } = useLanguage();
   const [value, setValue] = useState(question.answer || '');
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const [initialQuestionId, setInitialQuestionId] = useState(question.id);
@@ -85,14 +87,14 @@ export default function CanvasModal({
             className="w-full border border-gray-300 rounded p-3 h-40 resize-none focus:border-blue-500 focus:outline-none"
             value={value}
             onChange={e => handleValueChange(e.target.value)}
-            placeholder="Digite sua resposta aqui..."
+            placeholder={t('canvas.answerPlaceholder')}
             disabled={loading}
           />
         </div>
         {question.answer_suggestion && (
           <div className="mb-4">
             <div className="p-3 bg-green-50 border border-green-200 rounded">
-              <p className="text-sm font-medium text-green-800 mb-1">Resposta sugerida:</p>
+              <p className="text-sm font-medium text-green-800 mb-1">{t('canvas.answerSuggestion')}</p>
               <p className="text-sm text-green-700 italic">{question.answer_suggestion}</p>
               <button
                 className="mt-2 text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
@@ -110,14 +112,14 @@ export default function CanvasModal({
             onClick={onClose}
             disabled={loading}
           >
-            Cancelar
+            {t('canvas.cancel')}
           </button>
           <button
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             onClick={handleSave}
             disabled={loading}
           >
-            {loading ? 'Salvando...' : 'Salvar'}
+            {loading ? t('canvas.saving') : t('canvas.save')}
           </button>
         </div>
       </div>

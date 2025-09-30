@@ -66,7 +66,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db=Depends(get
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/create_canvas", response_model=Canvas)
-async def create_canvas(name: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
+async def create_canvas(name: str, language: str = "pt", current_user: User = Depends(get_current_user), db=Depends(get_db)):
     # Verificar se já existe um canvas com o mesmo nome para o usuário
     result = await db.execute(select(CanvasORM).where(CanvasORM.name == name, CanvasORM.owner_id == current_user.id))
     if result.scalars().first():
@@ -74,8 +74,8 @@ async def create_canvas(name: str, current_user: User = Depends(get_current_user
 
     canvas_id = str(uuid.uuid4())
 
-    # Criar o estado inicial do canvas
-    initial_canvas_state = CanvasState()
+    # Criar o estado inicial do canvas com o idioma especificado
+    initial_canvas_state = CanvasState(language=language)
     canvas_state_dict = initial_canvas_state.model_dump()
 
     # Obter o usuário completo do banco
@@ -211,7 +211,7 @@ async def invite_user(canvas_id: str, email: str, current_user: User = Depends(g
     return True
 
 @app.get("/canvas/state/{canvas_id}")
-async def get_canvas_state(canvas_id: str, current_user: User = Depends(get_current_user), db=Depends(get_db)):
+async def get_canvas_state(canvas_id: str, language: str = "pt", current_user: User = Depends(get_current_user), db=Depends(get_db)):
     canvas_data = await db.execute(
         select(CanvasORM.canvas_state, CanvasORM.name)
         .select_from(CanvasORM)
@@ -223,8 +223,26 @@ async def get_canvas_state(canvas_id: str, current_user: User = Depends(get_curr
     if canvas_data is None:
         raise HTTPException(status_code=403, detail="Canvas não encontrado ou acesso negado")
     
-    canvas_state, canvas_name = canvas_data
-    canvas_state = CanvasState(**canvas_state)
+    canvas_state_dict, canvas_name = canvas_data
+    
+    # Se o idioma for diferente do estado atual do canvas, recriar os campos com o idioma solicitado
+    canvas_state = CanvasState(**canvas_state_dict)
+    
+    # Verificar se precisa atualizar o idioma dos campos
+    if language != "pt":  # Se não for português, recriar com inglês
+        from app.schemas.state import init_canvas
+        new_fields = init_canvas(language)
+        
+        # Preservar as respostas existentes
+        for existing_field in canvas_state.fields:
+            for new_field in new_fields:
+                if new_field.id == existing_field.id:
+                    new_field.answer = existing_field.answer
+                    new_field.question_suggestion = existing_field.question_suggestion
+                    new_field.answer_suggestion = existing_field.answer_suggestion
+                    break
+        
+        canvas_state.fields = new_fields
     
     return {
         "name": canvas_name,

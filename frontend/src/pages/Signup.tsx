@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, ApiError } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -35,23 +38,26 @@ export default function Signup() {
   };
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-gray-50">
+    <main className="flex items-center justify-center min-h-screen bg-gray-50 relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSelector />
+      </div>
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded shadow-md w-full max-w-sm"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Criar Conta</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">{t('auth.signup')}</h2>
         {error && <div className="mb-4 text-red-600">{error}</div>}
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t('auth.email')}
           className="w-full mb-4 px-3 py-2 border rounded focus:outline-blue-500"
           value={email}
           onChange={e => setEmail(e.target.value)}
         />
         <input
           type="password"
-          placeholder="Senha"
+          placeholder={t('auth.password')}
           className="w-full mb-6 px-3 py-2 border rounded focus:outline-blue-500"
           value={password}
           onChange={e => setPassword(e.target.value)}
@@ -65,15 +71,15 @@ export default function Signup() {
               : 'bg-blue-600 hover:bg-blue-700'
           } text-white`}
         >
-          {loading ? 'Criando...' : 'Criar Conta'}
+          {loading ? 'Criando...' : t('auth.signup')}
         </button>
         <p className="mt-4 text-center text-sm">
-          Já tem conta?{' '}
+          {t('auth.alreadyHaveAccount')}{' '}
           <span
             className="text-blue-600 hover:underline cursor-pointer"
             onClick={() => navigate('/login')}
           >
-            Entrar
+            {t('auth.loginHere')}
           </span>
         </p>
       </form>

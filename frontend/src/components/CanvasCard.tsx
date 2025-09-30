@@ -1,6 +1,7 @@
 
 import { FieldState } from '../types/api';
 import { Award, Briefcase, LineChart } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface CanvasCardProps {
   field: FieldState;
@@ -9,6 +10,7 @@ interface CanvasCardProps {
 }
 
 export default function CanvasCard({ field, onClick, isProcessing = false }: CanvasCardProps) {
+  const { t } = useLanguage();
   const filled = !!field.answer;
 
   // Função para definir as cores conforme o id
@@ -134,10 +136,10 @@ export default function CanvasCard({ field, onClick, isProcessing = false }: Can
           {isProcessing ? (
             <>
               <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></div>
-              Gerando sugestões...
+              {t('canvas.generating')}
             </>
           ) : (
-            '✓ Preenchido'
+            t('canvas.filled')
           )}
         </div>
       )}

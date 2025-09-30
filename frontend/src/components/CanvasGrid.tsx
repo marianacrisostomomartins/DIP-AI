@@ -2,6 +2,7 @@ import CanvasCard from './CanvasCard';
 import { useState, useEffect, useRef } from 'react';
 import CanvasModal from './CanvasModal';
 import { CanvasState, FieldState } from '../types/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface CanvasGridProps {
   canvasId: string;
@@ -12,6 +13,7 @@ interface CanvasGridProps {
 }
 
 export default function CanvasGrid({ canvasId, canvasState, onUpdateField, processingFields = new Set(), setModalOpen }: CanvasGridProps) {
+  const { t } = useLanguage();
   const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
   const [updating, setUpdating] = useState(false);
   const [visibleSections, setVisibleSections] = useState(new Set(['objetivos', 'processos', 'priorizacao', 'tarefas', 'viabilidade']));
@@ -102,9 +104,9 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
               }
               bg-[conic-gradient(#2563eb,#eab308,#f97316,#ef4444,#22c55e,#2563eb)]
               animate-spin-slow hover:animate-none`}
-            title={visibleSections.size === 5 ? "Ocultar Todas as Seções" : "Mostrar Todas as Seções"}
+            title={visibleSections.size === 5 ? t('canvas.hideAllSections') : t('canvas.showAllSections')}
           >
-            <span className="sr-only">{visibleSections.size === 5 ? "Ocultar Todas as Seções" : "Mostrar Todas as Seções"}</span>
+            <span className="sr-only">{visibleSections.size === 5 ? t('canvas.hideAllSections') : t('canvas.showAllSections')}</span>
             <svg className={`h-4 w-4 transition-opacity duration-300 ${visibleSections.size === 5 ? 'opacity-100' : 'opacity-50'}`} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <circle fill="#fff" cx="12" cy="12" r="10" stroke="#fff" strokeWidth="2"/>
             </svg>
@@ -118,7 +120,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
                 : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
           >
-            Objetivos do Negócio
+            {t('canvas.businessObjectives')}
           </button>
 
           <button
@@ -129,7 +131,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
                 : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
               }`}
           >
-            Caracterização dos Processos
+            {t('canvas.processCharacterization')}
           </button>
 
           <button
@@ -140,7 +142,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
                 : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
               }`}
           >
-            Priorização
+            {t('canvas.prioritization')}
           </button>
 
           <button
@@ -151,7 +153,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
                 : 'bg-red-100 text-red-700 hover:bg-red-200'
               }`}
           >
-            Identificação de Tarefas de Dados
+            {t('canvas.dataTasksIdentification')}
           </button>
 
           <button
@@ -162,7 +164,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
                 : 'bg-green-100 text-green-700 hover:bg-green-200'
               }`}
           >
-            Análise de Viabilidade
+            {t('canvas.viabilityAnalysis')}
           </button>
         </div>
       </div>
@@ -171,7 +173,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
         {/* Seção Objetivos do Negócio */}
         {visibleSections.has('objetivos') && (
           <div>
-            <h2 className="text-xl font-bold text-blue-700 mb-4">Objetivos do Negócio</h2>
+            <h2 className="text-xl font-bold text-blue-700 mb-4">{t('canvas.businessObjectives')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {groupedFields.objetivos.map((field) => (
                 <div key={field.id}>
@@ -189,7 +191,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
         {/* Seção Caracterização dos Processos */}
         {visibleSections.has('processos') && (
           <div>
-            <h2 className="text-xl font-bold text-yellow-600 mb-4">Caracterização dos Processos</h2>
+            <h2 className="text-xl font-bold text-yellow-600 mb-4">{t('canvas.processCharacterization')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {groupedFields.processos.map((field) => (
                 <div key={field.id}>
@@ -207,7 +209,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
         {/* Seção Priorização */}
         {visibleSections.has('priorizacao') && (
           <div>
-            <h2 className="text-xl font-bold text-orange-600 mb-4">Priorização</h2>
+            <h2 className="text-xl font-bold text-orange-600 mb-4">{t('canvas.prioritization')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {groupedFields.priorizacao.map((field) => (
                 <div key={field.id}>
@@ -225,7 +227,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
         {/* Seção Identificação de Tarefas de Dados */}
         {visibleSections.has('tarefas') && (
           <div>
-            <h2 className="text-xl font-bold text-red-600 mb-4">Identificação de Tarefas de Dados</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-4">{t('canvas.dataTasksIdentification')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {groupedFields.tarefas.map((field) => (
                 <div key={field.id}>
@@ -243,7 +245,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
         {/* Seção Análise de Viabilidade */}
         {visibleSections.has('viabilidade') && (
           <div>
-            <h2 className="text-xl font-bold text-green-600 mb-4">Análise de Viabilidade</h2>
+            <h2 className="text-xl font-bold text-green-600 mb-4">{t('canvas.viabilityAnalysis')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {groupedFields.viabilidade.map((field) => (
                 <div key={field.id}>

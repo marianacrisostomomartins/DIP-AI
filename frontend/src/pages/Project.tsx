@@ -6,11 +6,13 @@ import CanvasGrid from '../components/CanvasGrid';
 import ProcessingIndicator from '../components/ProcessingIndicator';
 import { useCanvas } from '../hooks/useCanvas';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Project() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const { canvasState, canvasName, loading, error, updateField, refreshCanvas, processingFields, setModalOpen } = useCanvas(id || '');
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function Project() {
             onClick={() => navigate('/')}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            Voltar à página inicial
+            {t('canvas.backToHome')}
           </button>
         </div>
       </div>

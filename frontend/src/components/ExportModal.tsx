@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Download, FileText, File } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface ExportModalProps {
 }
 
 export default function ExportModal({ isOpen, onClose, onExport, canvasName }: ExportModalProps) {
+  const { t } = useLanguage();
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState('');
   const [exportMessageType, setExportMessageType] = useState<'success' | 'error' | ''>('');
@@ -21,7 +23,8 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
 
     try {
       await onExport(format);
-      setExportMessage(`${canvasName} exportado como ${format.toUpperCase()} com sucesso!`);
+      const successMessage = format === 'pdf' ? t('modal.exportPdfSuccess') : t('modal.exportJsonSuccess');
+      setExportMessage(successMessage);
       setExportMessageType('success');
       
       // Fechar modal após 2 segundos
@@ -32,7 +35,7 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
       }, 2000);
     } catch (error: any) {
       console.error('Erro ao exportar:', error);
-      const errorMessage = error.message || `Erro ao exportar como ${format.toUpperCase()}. Tente novamente.`;
+      const errorMessage = error.message || t('modal.exportError');
       setExportMessage(errorMessage);
       setExportMessageType('error');
     } finally {
@@ -70,11 +73,11 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
       <div ref={modalRef} className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md text-gray-900">
         <div className="flex items-center gap-3 mb-6">
           <Download size={24} className="text-blue-600" />
-          <h2 className="text-xl font-bold">Exportar Projeto</h2>
+          <h2 className="text-xl font-bold">{t('modal.exportProject')}</h2>
         </div>
         
         <p className="text-gray-600 mb-6">
-          Escolha o formato para exportar <strong>{canvasName}</strong>:
+          {t('modal.chooseFormat')} <strong>{canvasName}</strong>:
         </p>
 
         <div className="space-y-4 mb-6">
@@ -88,7 +91,7 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
               <FileText size={24} className="text-red-600" />
             </div>
             <div className="text-left flex-1">
-              <h3 className="font-semibold text-gray-900">Exportar como PDF</h3>
+              <h3 className="font-semibold text-gray-900">{t('modal.exportAsPdf')}</h3>
             </div>
           </button>
 
@@ -102,7 +105,7 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
               <File size={24} className="text-green-600" />
             </div>
             <div className="text-left flex-1">
-              <h3 className="font-semibold text-gray-900">Exportar como JSON</h3>
+              <h3 className="font-semibold text-gray-900">{t('modal.exportAsJson')}</h3>
             </div>
           </button>
         </div>
@@ -112,7 +115,7 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
           <div className="mb-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg">
               <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-              <span>Exportando...</span>
+              <span>{t('modal.exporting')}</span>
             </div>
           </div>
         )}
@@ -134,7 +137,7 @@ export default function ExportModal({ isOpen, onClose, onExport, canvasName }: E
           disabled={isExporting}
           className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isExporting ? 'Exportando...' : 'Cancelar'}
+          {isExporting ? t('modal.exporting') : t('modal.cancel')}
         </button>
       </div>
     </div>
