@@ -3,7 +3,6 @@ from typing import Dict, Optional
 from enum import Enum
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-import asyncio
 
 
 class JobStatus(str, Enum):
@@ -87,7 +86,7 @@ class JobManager:
 job_manager = JobManager(job_retention_minutes=5)
 
 
-async def process_field_update_job(canvas_id: str, field_id: int, answer: str, job_id: str, llm_client, db_session_factory):
+async def process_field_update_job(canvas_id: str, field_id: int, answer: str, job_id: str, llm_client, db_session_factory, language: str = "pt"):
     """Processa a atualização de campo em background"""
     from app.db.models_orm import CanvasORM
     from app.schemas.state import CanvasState
@@ -113,8 +112,8 @@ async def process_field_update_job(canvas_id: str, field_id: int, answer: str, j
             # Atualizar a resposta do campo
             canvas_state.set_field_answer(field_id, answer)
 
-            # Atualizar as sugestões usando o LLM
-            await canvas_state.update_suggestions(llm_client)
+            # Atualizar as sugestões usando o LLM com o idioma especificado
+            await canvas_state.update_suggestions(llm_client, language)
             
             # Persistir as alterações no banco de dados
             canvas_orm.canvas_state = canvas_state.model_dump()

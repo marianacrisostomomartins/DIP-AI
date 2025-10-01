@@ -52,7 +52,6 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
     setModalOpen(selectedFieldId);
     
     if (selectedFieldId && !selected) {
-      console.warn(`Campo selecionado ${selectedFieldId} não foi encontrado após atualização. Fechando modal.`);
       setSelectedFieldId(null);
       setModalOpen(null);
     }

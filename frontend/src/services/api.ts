@@ -188,8 +188,8 @@ class ApiClient {
   }
 
   // Field endpoints
-  async updateFieldSync(canvasId: string, fieldId: string, answer: FieldAnswer): Promise<CanvasStateResponse> {
-    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/field/${fieldId}/sync`, {
+  async updateFieldSync(canvasId: string, fieldId: string, answer: FieldAnswer, language: string = 'pt'): Promise<CanvasStateResponse> {
+    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/field/${fieldId}/sync?language=${language}`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(answer)
@@ -198,8 +198,8 @@ class ApiClient {
     return this.handleResponse<CanvasStateResponse>(response);
   }
 
-  async updateFieldAsync(canvasId: string, fieldId: string, answer: FieldAnswer): Promise<{ job_id: string; name: string; canvas_state: CanvasState }> {
-    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/field/${fieldId}`, {
+  async updateFieldAsync(canvasId: string, fieldId: string, answer: FieldAnswer, language: string = 'pt'): Promise<{ job_id: string; name: string; canvas_state: CanvasState }> {
+    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/field/${fieldId}?language=${language}`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(answer)

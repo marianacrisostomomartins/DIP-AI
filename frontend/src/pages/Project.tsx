@@ -27,13 +27,13 @@ export default function Project() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Canvas ID não encontrado</h1>
-          <p className="text-gray-600 mb-6">Não foi possível identificar o projeto que você está tentando acessar.</p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">{t('project.canvasIdNotFound')}</h1>
+          <p className="text-gray-600 mb-6">{t('project.projectNotFound')}</p>
           <button 
             onClick={() => navigate('/')}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            {t('canvas.backToHome')}
+            {t('project.backToHome')}
           </button>
         </div>
       </div>
@@ -51,26 +51,26 @@ export default function Project() {
         <div className="p-6">
           {loading && (
             <div className="text-center py-8">
-              <p className="text-gray-600">Carregando canvas...</p>
+              <p className="text-gray-600">{t('project.loadingCanvas')}</p>
             </div>
           )}
           
           {error && (
             <div className="text-center py-8">
-              <h2 className="text-xl font-semibold text-red-600 mb-2">Erro ao carregar canvas</h2>
+              <h2 className="text-xl font-semibold text-red-600 mb-2">{t('project.errorLoadingCanvas')}</h2>
               <p className="text-red-600 mb-4">{error}</p>
               <div className="space-x-4">
                 <button 
                   onClick={refreshCanvas}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Tentar novamente
+                  {t('project.tryAgain')}
                 </button>
                 <button 
                   onClick={() => navigate('/')}
                   className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                 >
-                  Voltar à página inicial
+                  {t('project.backToHomePage')}
                 </button>
               </div>
             </div>

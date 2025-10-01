@@ -90,9 +90,9 @@ export default function CanvasCard({ field, onClick, isProcessing = false }: Can
       `}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-md text-gray-800 truncate flex-1">{field.id} - {field.title}</h3>
-        <div className="flex items-center gap-2">
+      <div className="flex items-start justify-between mb-2">
+        <h3 className="font-semibold text-md text-gray-800 flex-1 pr-2 leading-tight">{field.id} - {field.title}</h3>
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex items-center">
             {getRoleIcons(field.id)}
           </div>

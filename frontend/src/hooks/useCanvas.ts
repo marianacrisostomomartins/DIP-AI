@@ -39,6 +39,15 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
     }
   }, [language]);
 
+  // Processar atualização pendente quando modal fechar
+  useEffect(() => {
+    if (openModalFieldId === null && pendingUpdate) {
+      console.log('Modal fechou, processando atualização pendente');
+      setPendingUpdate(false);
+      loadCanvasState();
+    }
+  }, [openModalFieldId, pendingUpdate]);
+
   const loadCanvasState = async () => {
     try {
       setLoading(true);
@@ -65,30 +74,18 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
   const updateField = async (fieldId: number, answer: string, useAsync = true) => {
     try {
       if (useAsync) {
-        // 1. Marcar campo como sendo processado
         setProcessingFields(prev => new Set(prev).add(fieldId));
-        
-        // 2. Fazer chamada async e obter resposta imediata
-        const response = await apiClient.updateFieldAsync(canvasId, fieldId.toString(), { answer });
-        
-        // 3. Atualizar estado imediatamente com resposta parcial
+        const response = await apiClient.updateFieldAsync(canvasId, fieldId.toString(), { answer }, language);
         setCanvasState(response.canvas_state);
         setCanvasName(response.name);
-        
-        // 4. Armazenar job_id para este campo
         setActiveJobs(prev => new Map(prev).set(fieldId, response.job_id));
-        
-        // 5. Iniciar polling em background (não awaitar)
         pollJobInBackground(fieldId, response.job_id);
-        
       } else {
-        // Processamento síncrono (mantém comportamento original)
-        const response = await apiClient.updateFieldSync(canvasId, fieldId.toString(), { answer });
+        const response = await apiClient.updateFieldSync(canvasId, fieldId.toString(), { answer }, language);
         setCanvasState(response.canvas_state);
         setCanvasName(response.name);
       }
     } catch (err) {
-      // Remover campo da lista de processamento em caso de erro
       setProcessingFields(prev => {
         const newSet = new Set(prev);
         newSet.delete(fieldId);
@@ -125,7 +122,6 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
       });
       
       if (job.status === 'completed') {
-        // 6. Só recarregar estado final se não houver modal aberto
         if (openModalFieldId === null) {
           await loadCanvasState();
         } else {
@@ -134,7 +130,6 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
         }
       } else if (job.status === 'failed') {
         console.error(`Job ${jobId} falhou:`, job.error);
-        // Você pode adicionar uma notificação de erro aqui se necessário
       }
     } catch (error) {
       console.error(`Erro no polling do job ${jobId}:`, error);
@@ -157,12 +152,6 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
   const refreshCanvas = async () => {
     await loadCanvasState();
   };
-
-  useEffect(() => {
-    if (canvasId) {
-      loadCanvasState();
-    }
-  }, [canvasId, language]); // Recarregar quando o idioma mudar
 
   return {
     canvasState,

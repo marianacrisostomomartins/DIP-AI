@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from app.llm_client import LLMClient
 from app.schemas import User, Canvas, CanvasState, FieldAnswer
+from app.schemas.state import init_canvas
 from app.auth import (
     authenticate_user, get_password_hash, create_access_token, get_current_user
 )
@@ -226,23 +227,19 @@ async def get_canvas_state(canvas_id: str, language: str = "pt", current_user: U
     canvas_state_dict, canvas_name = canvas_data
     
     # Se o idioma for diferente do estado atual do canvas, recriar os campos com o idioma solicitado
+    canvas_state_dict.update({"language": language})
     canvas_state = CanvasState(**canvas_state_dict)
     
-    # Verificar se precisa atualizar o idioma dos campos
-    if language != "pt":  # Se não for português, recriar com inglês
-        from app.schemas.state import init_canvas
-        new_fields = init_canvas(language)
-        
-        # Preservar as respostas existentes
-        for existing_field in canvas_state.fields:
-            for new_field in new_fields:
-                if new_field.id == existing_field.id:
-                    new_field.answer = existing_field.answer
-                    new_field.question_suggestion = existing_field.question_suggestion
-                    new_field.answer_suggestion = existing_field.answer_suggestion
-                    break
-        
-        canvas_state.fields = new_fields
+    new_fields = init_canvas(language)
+    for existing_field in canvas_state.fields:
+        for new_field in new_fields:
+            if new_field.id == existing_field.id:
+                new_field.answer = existing_field.answer
+                new_field.question_suggestion = existing_field.question_suggestion
+                new_field.answer_suggestion = existing_field.answer_suggestion
+                break
+    
+    canvas_state.fields = new_fields
     
     return {
         "name": canvas_name,
@@ -250,7 +247,7 @@ async def get_canvas_state(canvas_id: str, language: str = "pt", current_user: U
     }
 
 @app.post("/canvas/{canvas_id}/field/{field_id}/sync")
-async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, current_user: User = Depends(get_current_user), db=Depends(get_db)) -> CanvasState:
+async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, language: str = "pt", current_user: User = Depends(get_current_user), db=Depends(get_db)) -> CanvasState:
     canvas_orm = await db.execute(
         select(CanvasORM)
         .join(CanvasORM.users)
@@ -267,8 +264,8 @@ async def update_field_answer(canvas_id: str, field_id: int, field_answer: Field
     # Atualizar a resposta do campo
     canvas_state.set_field_answer(field_id, field_answer.answer)
 
-    # Atualizar as sugestões usando o LLM
-    await canvas_state.update_suggestions(llm_client)
+    # Atualizar as sugestões usando o LLM com o idioma especificado
+    await canvas_state.update_suggestions(llm_client, language)
     
     # Persistir as alterações no banco de dados
     canvas_orm.canvas_state = canvas_state.model_dump()
@@ -286,6 +283,7 @@ async def update_field_answer_async(
     field_id: int,
     field_answer: FieldAnswer,
     background_tasks: BackgroundTasks,
+    language: str = "pt",
     current_user: User = Depends(get_current_user),
     db=Depends(get_db)
 ):
@@ -316,7 +314,8 @@ async def update_field_answer_async(
         field_answer.answer,
         job_id,
         llm_client,
-        get_db_session_factory()
+        get_db_session_factory(),
+        language  # Passa o idioma para o job em background
     )
     
     return {

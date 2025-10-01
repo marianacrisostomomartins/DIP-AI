@@ -29,7 +29,6 @@ export const translations = {
     'canvas.saving': 'Salvando...',
     'canvas.cancel': 'Cancelar',
     'canvas.answerPlaceholder': 'Digite sua resposta aqui...',
-    'canvas.questionSuggestion': 'Sugestão de pergunta:',
     'canvas.answerSuggestion': 'Sugestão de resposta:',
     'canvas.hideAllSections': 'Ocultar Todas as Seções',
     'canvas.showAllSections': 'Mostrar Todas as Seções',
@@ -38,6 +37,26 @@ export const translations = {
     'canvas.prioritization': 'Priorização',
     'canvas.dataTasksIdentification': 'Identificação de Tarefas de Dados',
     'canvas.viabilityAnalysis': 'Análise de Viabilidade',
+    'canvas.yourAnswer': 'Sua resposta:',
+    'canvas.useSuggestion': 'Usar esta sugestão',
+    'canvas.close': 'Fechar',
+    
+    // Processing Indicator
+    'processing.generating': 'sugestão sendo gerada',
+    'processing.generatingPlural': 'sugestões sendo geradas',
+    'processing.allUpdated': 'Todas as sugestões atualizadas',
+    
+    // Project page
+    'project.canvasIdNotFound': 'Canvas ID não encontrado',
+    'project.projectNotFound': 'Não foi possível identificar o projeto que você está tentando acessar.',
+    'project.backToHome': 'Voltar ao Início',
+    'project.loadingCanvas': 'Carregando canvas...',
+    'project.errorLoadingCanvas': 'Erro ao carregar canvas',
+    'project.tryAgain': 'Tentar novamente',
+    'project.backToHomePage': 'Voltar à página inicial',
+    
+    // Loading
+    'loading.text': 'Carregando...',
     
     // Auth
     'auth.login': 'Entrar',
@@ -54,7 +73,6 @@ export const translations = {
     // Language
     'language.portuguese': 'Português',
     'language.english': 'English',
-    'language.switch': 'Idioma',
     
     // Messages
     'message.canvasCreated': 'Canvas criado com sucesso!',
@@ -92,7 +110,7 @@ export const translations = {
     'sidebar.backToHome': 'Início',
     'sidebar.glossary': 'Glossário',
     'sidebar.businessOwner': 'Business Owner',
-    'sidebar.expert': 'Expert',
+    'sidebar.expert': 'Especialista de Domínio',
     'sidebar.dataScientist': 'Cientista de Dados',
     'sidebar.export': 'Exportar',
     'sidebar.share': 'Compartilhar',
@@ -135,7 +153,6 @@ export const translations = {
     'canvas.saving': 'Saving...',
     'canvas.cancel': 'Cancel',
     'canvas.answerPlaceholder': 'Type your answer here...',
-    'canvas.questionSuggestion': 'Question suggestion:',
     'canvas.answerSuggestion': 'Answer suggestion:',
     'canvas.hideAllSections': 'Hide All Sections',
     'canvas.showAllSections': 'Show All Sections',
@@ -144,6 +161,26 @@ export const translations = {
     'canvas.prioritization': 'Prioritization',
     'canvas.dataTasksIdentification': 'Data Tasks Identification',
     'canvas.viabilityAnalysis': 'Viability Analysis',
+    'canvas.yourAnswer': 'Your answer:',
+    'canvas.useSuggestion': 'Use this suggestion',
+    'canvas.close': 'Close',
+    
+    // Processing Indicator
+    'processing.generating': 'suggestion being generated',
+    'processing.generatingPlural': 'suggestions being generated',
+    'processing.allUpdated': 'All suggestions updated',
+    
+    // Project page
+    'project.canvasIdNotFound': 'Canvas ID not found',
+    'project.projectNotFound': 'Could not identify the project you are trying to access.',
+    'project.backToHome': 'Back to Home',
+    'project.loadingCanvas': 'Loading canvas...',
+    'project.errorLoadingCanvas': 'Error loading canvas',
+    'project.tryAgain': 'Try again',
+    'project.backToHomePage': 'Back to home page',
+    
+    // Loading
+    'loading.text': 'Loading...',
     
     // Auth
     'auth.login': 'Login',
@@ -160,7 +197,6 @@ export const translations = {
     // Language
     'language.portuguese': 'Português',
     'language.english': 'English',
-    'language.switch': 'Language',
     
     // Messages
     'message.canvasCreated': 'Canvas created successfully!',
@@ -198,7 +234,7 @@ export const translations = {
     'sidebar.backToHome': 'Home',
     'sidebar.glossary': 'Glossary',
     'sidebar.businessOwner': 'Business Owner',
-    'sidebar.expert': 'Expert',
+    'sidebar.expert': 'Domain Expert',
     'sidebar.dataScientist': 'Data Scientist',
     'sidebar.export': 'Export',
     'sidebar.share': 'Share',

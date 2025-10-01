@@ -23,8 +23,7 @@ export default function LanguageSelector() {
         className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
       >
         <Languages className="w-4 h-4" />
-        <span className="text-sm font-medium">{languages.find(l => l.code === language)?.flag}</span>
-        <span className="text-sm">{t('language.switch')}</span>
+        <span className="text-medium font-medium">{languages.find(l => l.code === language)?.flag}</span>
       </button>
       
       {isOpen && (

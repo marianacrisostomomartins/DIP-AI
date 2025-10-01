@@ -3,11 +3,9 @@ from typing import List, Optional, Literal
 import json
 import logging
 
-from app.prompts.update_suggestions import suggestions_prompt
+from app.prompts.update_suggestions import get_suggestions_prompt
 
 logging.basicConfig(level=logging.INFO)
-
-Language = Literal["pt", "en"]
 
 
 class CanvasField(BaseModel):
@@ -54,15 +52,20 @@ class CanvasState(BaseModel):
         raise ValueError(f"Field with id {field_id} not found.")
     
 
-    async def update_suggestions(self, llm):
+    async def update_suggestions(self, llm, language: str = "pt"):
         """
         Atualiza as sugestões de perguntas e respostas para cada campo do Canva usando o modelo de linguagem.
         Se houver erro na resposta ou tratamento das sugestões da LLM, o fluxo continua normalmente sem atualizar sugestões.
         Sinaliza o erro para o frontend via atributo suggestion_error.
+        
+        Args:
+            llm: Cliente do modelo de linguagem
+            language: Idioma para as sugestões ('pt' ou 'en'). Default é 'pt'.
         """
         self.suggestion_error = None
         try:
-            suggestions = await llm.ask(suggestions_prompt.format(state=self.get_canvas()))
+            prompt = get_suggestions_prompt(language)
+            suggestions = await llm.ask(prompt.format(state=self.get_canvas()))
             suggestions = llm.clean_reasoning_response(suggestions)
             suggestions = llm.clean_makdown_json(suggestions)
             logging.debug(f"Sugestões recebidas da LLM: {suggestions}")
@@ -77,7 +80,7 @@ class CanvasState(BaseModel):
             logging.error(f"Erro ao atualizar sugestões da LLM: {e}")
 
 
-def init_canvas(language: Language = "pt") -> List[CanvasField]:
+def init_canvas(language: str = "pt") -> List[CanvasField]:
     if language == "en":
         questions = [
             {"title": "Business objective", "question": "Present the general objective of the organization."},
@@ -89,7 +92,7 @@ def init_canvas(language: Language = "pt") -> List[CanvasField]:
             {"title": "Tasks for each process", "question": "What activities are involved in each process or problem (describe step by step)?"},
             {"title": "Why", "question": "How do these processes help in decisions and improvements of activities in the organization?"},
             {"title": "How it's done", "question": "How is each process performed?"},
-            {"title": "People involved", "question": "Who are the responsible parties, who performs and who is affected by each process or problem?"},
+            {"title": "Stakeholders", "question": "Who are the responsible parties, who performs and who is affected by each process or problem?"},
             {"title": "Where", "question": "In what location of the organization do these processes or problems occur?"},
             {"title": "How often", "question": "How often is each process performed (daily, weekly, etc)?"},
             {"title": "Severity", "question": "Rate from 1 to 5 the severity of each problem or process."},
@@ -124,7 +127,7 @@ def init_canvas(language: Language = "pt") -> List[CanvasField]:
             {"title": "Tarefas de cada processo", "question": "Quais as atividades envolvidas em cada processo ou problema (descreva o passo a passo)?"},
             {"title": "Por quê", "question": "Como esses processos auxiliam em decisões e melhorias das atividades na organização?"},
             {"title": "Como é feito", "question": "Como cada processo é realizado?"},
-            {"title": "Envolvidos", "question": "Quem são os responsáveis, quem realiza e quem é afetado por cada processo ou problema?"},
+            {"title": "Stakeholders", "question": "Quem são os responsáveis, quem realiza e quem é afetado por cada processo ou problema?"},
             {"title": "Onde", "question": "Em que local da organização esses processos ou problemas acontecem?"},
             {"title": "Com que frequência", "question": "Com que frequência cada processo é realizado (diária, semanal, etc)?"},
             {"title": "Gravidade", "question": "Julgue de 1 a 5 a gravidade de cada problema ou processo."},

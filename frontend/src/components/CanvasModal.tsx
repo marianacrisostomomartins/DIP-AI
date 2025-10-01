@@ -47,7 +47,7 @@ export default function CanvasModal({
     onSave(value);
   };
 
-  // Fecha apenas ao pressionar ESC (não fecha mais ao clicar fora)
+  // Fecha apenas ao pressionar ESC (não fecha ao clicar fora)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -65,7 +65,7 @@ export default function CanvasModal({
         <button
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none"
           onClick={onClose}
-          aria-label="Fechar"
+          aria-label={t('canvas.close')}
           disabled={loading}
         >
           ×
@@ -77,12 +77,12 @@ export default function CanvasModal({
           <div className="mb-4">
             <p className="text-base text-black mb-1">{question.question}</p>
             {question.question_suggestion && (
-              <p className="text-base text-blue-700">{question.question_suggestion}</p>
+              <p className="text-sm text-blue-700 italic">{question.question_suggestion}</p>
             )}
           </div>
         )}
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Sua resposta:</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('canvas.yourAnswer')}</h3>
           <textarea
             className="w-full border border-gray-300 rounded p-3 h-40 resize-none focus:border-blue-500 focus:outline-none"
             value={value}
@@ -94,14 +94,14 @@ export default function CanvasModal({
         {question.answer_suggestion && (
           <div className="mb-4">
             <div className="p-3 bg-green-50 border border-green-200 rounded">
-              <p className="text-sm font-medium text-green-800 mb-1">{t('canvas.answerSuggestion')}</p>
+              <p className="text-sm font-semibold text-green-800 mb-1">{t('canvas.answerSuggestion')}</p>
               <p className="text-sm text-green-700 italic">{question.answer_suggestion}</p>
               <button
                 className="mt-2 text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                 onClick={() => handleValueChange(question.answer_suggestion || '')}
                 disabled={loading}
               >
-                Usar esta sugestão
+                {t('canvas.useSuggestion')}
               </button>
             </div>
           </div>
