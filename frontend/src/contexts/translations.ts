@@ -40,10 +40,12 @@ export const translations = {
     'canvas.yourAnswer': 'Sua resposta:',
     'canvas.useSuggestion': 'Usar esta sugestão',
     'canvas.close': 'Fechar',
+    'canvas.suggestionsEnabledDescription': 'IA sugerindo respostas',
+    'canvas.suggestionsDisabledDescription': 'Sugestões da IA desabilitadas',
     
     // Processing Indicator
-    'processing.generating': 'sugestão sendo gerada',
-    'processing.generatingPlural': 'sugestões sendo geradas',
+    'processing.generating': 'Sugestão sendo gerada',
+    'processing.generatingPlural': 'Sugestões sendo geradas',
     'processing.allUpdated': 'Todas as sugestões atualizadas',
     
     // Project page
@@ -164,10 +166,12 @@ export const translations = {
     'canvas.yourAnswer': 'Your answer:',
     'canvas.useSuggestion': 'Use this suggestion',
     'canvas.close': 'Close',
-    
+    'canvas.suggestionsEnabledDescription': 'AI suggesting answers',
+    'canvas.suggestionsDisabledDescription': 'AI suggestions disabled',
+
     // Processing Indicator
-    'processing.generating': 'suggestion being generated',
-    'processing.generatingPlural': 'suggestions being generated',
+    'processing.generating': 'Suggestion being generated',
+    'processing.generatingPlural': 'Suggestions being generated',
     'processing.allUpdated': 'All suggestions updated',
     
     // Project page

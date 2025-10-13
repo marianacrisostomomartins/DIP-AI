@@ -247,7 +247,7 @@ async def get_canvas_state(canvas_id: str, language: str = "pt", current_user: U
     }
 
 @app.post("/canvas/{canvas_id}/field/{field_id}/sync")
-async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, language: str = "pt", current_user: User = Depends(get_current_user), db=Depends(get_db)) -> CanvasState:
+async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, language: str = "pt", update_suggestions: bool = True, current_user: User = Depends(get_current_user), db=Depends(get_db)) -> CanvasState:
     canvas_orm = await db.execute(
         select(CanvasORM)
         .join(CanvasORM.users)
@@ -265,8 +265,9 @@ async def update_field_answer(canvas_id: str, field_id: int, field_answer: Field
     canvas_state.set_field_answer(field_id, field_answer.answer)
 
     # Atualizar as sugestões usando o LLM com o idioma especificado
-    await canvas_state.update_suggestions(llm_client, language)
-    
+    if update_suggestions:
+        await canvas_state.update_suggestions(llm_client, language)
+
     # Persistir as alterações no banco de dados
     canvas_orm.canvas_state = canvas_state.model_dump()
     await db.commit()

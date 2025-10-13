@@ -3,17 +3,19 @@ import { useState, useEffect, useRef } from 'react';
 import CanvasModal from './CanvasModal';
 import { CanvasState, FieldState } from '../types/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSuggestions } from '../contexts/SuggestionsContext';
 
 interface CanvasGridProps {
   canvasId: string;
   canvasState: CanvasState;
-  onUpdateField: (fieldId: number, answer: string, useAsync?: boolean) => Promise<void>;
+  onUpdateField: (fieldId: number, answer: string, useAsync?: boolean, updateSuggestions?: boolean) => Promise<void>;
   processingFields?: Set<number>;
   setModalOpen: (fieldId: number | null) => void;
 }
 
 export default function CanvasGrid({ canvasId, canvasState, onUpdateField, processingFields = new Set(), setModalOpen }: CanvasGridProps) {
   const { t } = useLanguage();
+  const { suggestionsEnabled } = useSuggestions();
   const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
   const [updating, setUpdating] = useState(false);
   const [visibleSections, setVisibleSections] = useState(new Set(['objetivos', 'processos', 'priorizacao', 'tarefas', 'viabilidade']));
@@ -62,7 +64,13 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
     
     try {
       setUpdating(true);
-      await onUpdateField(selected.id, value, true); // Use async by default
+      // Se as sugestões estão habilitadas, usa async (que sempre gera sugestões)
+      // Se estão desabilitadas, usa sync com updateSuggestions=false
+      if (suggestionsEnabled) {
+        await onUpdateField(selected.id, value, true); // Use async (sempre com sugestões)
+      } else {
+        await onUpdateField(selected.id, value, false, false); // Use sync sem sugestões
+      }
       setSelectedFieldId(null);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Erro ao salvar');

@@ -188,8 +188,8 @@ class ApiClient {
   }
 
   // Field endpoints
-  async updateFieldSync(canvasId: string, fieldId: string, answer: FieldAnswer, language: string = 'pt'): Promise<CanvasStateResponse> {
-    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/field/${fieldId}/sync?language=${language}`, {
+  async updateFieldSync(canvasId: string, fieldId: string, answer: FieldAnswer, language: string = 'pt', updateSuggestions: boolean = true): Promise<CanvasStateResponse> {
+    const response = await fetch(`${API_BASE_URL}/canvas/${canvasId}/field/${fieldId}/sync?language=${language}&update_suggestions=${updateSuggestions}`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(answer)

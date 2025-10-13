@@ -9,7 +9,7 @@ export interface UseCanvasReturn {
   loading: boolean;
   error: string;
   processingFields: Set<number>; // IDs dos campos sendo processados
-  updateField: (fieldId: number, answer: string, useAsync?: boolean) => Promise<void>;
+  updateField: (fieldId: number, answer: string, useAsync?: boolean, updateSuggestions?: boolean) => Promise<void>;
   refreshCanvas: () => Promise<void>;
   setModalOpen: (fieldId: number | null) => void; // Nova função para reportar estado do modal
 }
@@ -71,7 +71,7 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
     }
   };
 
-  const updateField = async (fieldId: number, answer: string, useAsync = true) => {
+  const updateField = async (fieldId: number, answer: string, useAsync = true, updateSuggestions = true) => {
     try {
       if (useAsync) {
         setProcessingFields(prev => new Set(prev).add(fieldId));
@@ -81,7 +81,7 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
         setActiveJobs(prev => new Map(prev).set(fieldId, response.job_id));
         pollJobInBackground(fieldId, response.job_id);
       } else {
-        const response = await apiClient.updateFieldSync(canvasId, fieldId.toString(), { answer }, language);
+        const response = await apiClient.updateFieldSync(canvasId, fieldId.toString(), { answer }, language, updateSuggestions);
         setCanvasState(response.canvas_state);
         setCanvasName(response.name);
       }
