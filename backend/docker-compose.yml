@@ -13,11 +13,6 @@ services:
     restart: unless-stopped
     networks:
       - dip-ai-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dipuser -d dipdb"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   backend:
     build: 
@@ -31,16 +26,10 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     restart: unless-stopped
     networks:
       - dip-ai-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     command: sh -c "python app/db/init_db.py && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1"
 
   nginx:
@@ -54,16 +43,10 @@ services:
       - ./ssl:/etc/ssl/certs
       - nginx_logs:/var/log/nginx
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     restart: unless-stopped
     networks:
       - dip-ai-network
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   postgres_data:
