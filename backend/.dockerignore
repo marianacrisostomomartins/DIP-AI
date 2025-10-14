@@ -87,3 +87,7 @@ docker-compose*
 
 # Logs
 *.log
+
+# Backups
+backups/
+scripts/
