@@ -41,6 +41,11 @@ async def root():
     """Rota raiz que retorna informações básicas sobre a API"""
     return {"message": "DIP-AI Canvas API", "version": "0.1.0"}
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint para monitoramento"""
+    return {"status": "healthy", "service": "dip-ai-backend"}
+
 @app.post("/register")
 async def register(form_data: OAuth2PasswordRequestForm = Depends(), db=Depends(get_db)):
     result = await db.execute(select(UserORM).where(UserORM.email == form_data.username))

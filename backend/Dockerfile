@@ -1,27 +1,56 @@
-# Use uma imagem oficial do Python como base
+# Multi-stage build para otimizar tamanho da imagem
+FROM python:3.12-slim as builder
+
+# Instalar dependências de build
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Criar e ativar ambiente virtual
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copiar e instalar dependências
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Imagem final
 FROM python:3.12-slim
 
-# Instalar OpenSSL para gerar certificados
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Instalar apenas as dependências de runtime necessárias
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Definir o diretório de trabalho no container
+# Copiar ambiente virtual do builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Criar usuário não-root para segurança
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Criar diretórios necessários
+RUN mkdir -p /app/logs && \
+    chown -R appuser:appuser /app
+
+# Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos de dependências primeiro (para aproveitar o cache do Docker)
-COPY requirements.txt .
+# Copiar código da aplicação
+COPY --chown=appuser:appuser . .
 
-# Instalar as dependências do Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Mudar para usuário não-root
+USER appuser
 
-# Copiar o código da aplicação
-COPY . .
-
-# Copiar e tornar executável o script de geração SSL
-COPY generate_ssl.sh .
-RUN chmod +x generate_ssl.sh
-
-# Expor a porta 8000 (HTTPS com SSL)
+# Expor porta
 EXPOSE 8000
 
-# Comando para executar a aplicação
-CMD ["sh", "-c", "./generate_ssl.sh && uvicorn app.main:app --host 0.0.0.0 --port 8000 --ssl-keyfile /app/ssl/private.key --ssl-certfile /app/ssl/certificate.crt"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Comando padrão (será sobrescrito pelo docker-compose)
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

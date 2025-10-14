@@ -1,20 +1,49 @@
+version: '3.8'
+
 services:
-  backend:
-    build: .
-    container_name: dip-ai-backend
-    ports:
-      - "8000:8000"
+  postgres:
+    image: postgres:15-alpine
+    container_name: dip-ai-postgres
     environment:
-      - PYTHONPATH=/app
-      - OLLAMA_HOST=http://host.docker.internal:11434
-    env_file:
-      - .env
-    extra_hosts:
-      - "postgres:host-gateway"
-      - "host.docker.internal:host-gateway"
+      POSTGRES_DB: dipdb
+      POSTGRES_USER: dipuser
+      POSTGRES_PASSWORD: dippassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     restart: unless-stopped
     networks:
       - dip-ai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dipuser -d dipdb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: dip-ai-backend
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://dipuser:dippassword@postgres:5432/dipdb
+      - ENVIRONMENT=production
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - dip-ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: sh -c "python app/db/init_db.py && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1"
 
   nginx:
     image: nginx:alpine
@@ -23,13 +52,26 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx-ssl.conf:/etc/nginx/conf.d/default.conf
-      - ./ssl:/etc/ssl
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/ssl/certs
+      - nginx_logs:/var/log/nginx
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - dip-ai-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  nginx_logs:
+    driver: local
 
 networks:
   dip-ai-network:
