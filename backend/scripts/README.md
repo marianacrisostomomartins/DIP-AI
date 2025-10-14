@@ -12,7 +12,7 @@ Script principal para criar backups do banco de dados.
 - Compressão opcional com gzip
 - Backup completo, apenas estrutura ou apenas dados
 - Limpeza automática de backups antigos
-- Logs detalhados
+- Logs detalhados com cores
 
 **Uso:**
 ```bash
@@ -48,6 +48,8 @@ Script para restaurar backups do banco de dados.
 - Suporte para Docker e instalação local
 - Restore de arquivos comprimidos e não comprimidos
 - Opções para recriar banco, limpar dados existentes
+- **NOVO**: Gerenciamento automático de conexões ativas
+- **NOVO**: Visualização de conexões antes do restore
 - Verificação de integridade após restore
 - Confirmação de segurança para operações destrutivas
 
@@ -59,11 +61,17 @@ Script para restaurar backups do banco de dados.
 # Restore local forçado (sem confirmação)
 ./scripts/restore_db.sh --local --force backup.sql.gz
 
-# Recriar banco completamente
+# Recriar banco completamente (resolve erro de conexões ativas)
 ./scripts/restore_db.sh --drop-db backup.sql
 
 # Restore apenas dados
 ./scripts/restore_db.sh --data-only backup.sql
+
+# Desconectar usuários antes do restore
+./scripts/restore_db.sh --disconnect-users backup.sql
+
+# Mostrar conexões ativas
+./scripts/restore_db.sh --show-connections
 ```
 
 **Opções:**
@@ -74,6 +82,8 @@ Script para restaurar backups do banco de dados.
 - `--clean`: Limpar objetos existentes antes do restore
 - `--data-only`: Restore apenas dados
 - `--schema-only`: Restore apenas estrutura
+- `--disconnect-users`: **NOVO**: Desconectar usuários ativos antes do restore
+- `--show-connections`: **NOVO**: Mostrar conexões ativas no banco
 - `-v, --verbose`: Saída verbosa
 - `-h, --help`: Exibir ajuda
 
@@ -82,7 +92,7 @@ Script para backups automáticos com diferentes frequências.
 
 **Características:**
 - Backups diários, semanais e mensais
-- Retenção automática de backups (3 diários, 4 semanais, 8 mensais)
+- Retenção automática de backups (7 diários, 4 semanais, 12 mensais)
 - Verificação de saúde do banco antes do backup
 - Logs centralizados
 - Sistema de notificações (extensível)
@@ -98,6 +108,45 @@ Script para backups automáticos com diferentes frequências.
 # Backup mensal
 ./scripts/backup_auto.sh monthly
 ```
+
+### 4. manage_connections.sh
+**NOVO**: Script para gerenciar conexões ativas do PostgreSQL.
+
+**Características:**
+- Visualizar conexões ativas em tempo real
+- Encerrar conexões por usuário ou PID
+- Estatísticas de conexão
+- Suporte para Docker e instalação local
+
+**Uso:**
+```bash
+# Listar conexões ativas
+./scripts/manage_connections.sh list
+
+# Encerrar todas as conexões do banco
+./scripts/manage_connections.sh kill
+
+# Encerrar conexões de um usuário específico
+./scripts/manage_connections.sh kill-user dipuser
+
+# Encerrar conexão por PID
+./scripts/manage_connections.sh kill-pid 1234
+
+# Mostrar estatísticas
+./scripts/manage_connections.sh stats
+```
+
+**Opções:**
+- `-d, --docker`: Usar container Docker (padrão)
+- `-l, --local`: Usar instalação local do PostgreSQL
+- `-v, --verbose`: Saída verbosa
+- `-h, --help`: Exibir ajuda
+
+### 5. examples.sh
+Script com exemplos de uso de todos os scripts.
+
+### 6. test_scripts.sh
+Script para testar o funcionamento dos scripts de backup/restore.
 
 ## Configuração
 

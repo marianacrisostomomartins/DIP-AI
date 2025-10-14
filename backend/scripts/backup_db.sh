@@ -17,7 +17,7 @@ DB_USER="dipuser"
 DB_PASSWORD="dippassword"
 DB_HOST="localhost"
 DB_PORT="5432"
-CONTAINER_NAME="dip-ai-postgres"
+CONTAINER_NAME="dip-postgres"
 
 # Cores para output
 RED='\033[0;31m'
