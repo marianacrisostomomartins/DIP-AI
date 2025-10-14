@@ -1,33 +1,28 @@
-import ollama
+from google import genai
 import re
-import os
 
 # Model configurations
-MODEL_NAME = "deepseek-r1:14b" # "gemma3:12b" "deepseek-r1:14b"
-MODEL_OPTIONS = {
+MODEL_NAME = "gemini-2.5-flash"
+MODEL_OPTIONS = genai.types.GenerateContentConfig(**{
     "seed": 42,
     "temperature": 0,
-    "num_ctx": 4096,
-    "timeout": 300,
-}
-
-# Ollama host configuration
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    "thinking_config": genai.types.ThinkingConfig(thinking_budget=0, includeThoughts=False)
+})
 
 class LLMClient:
     @staticmethod
     async def ask(prompt: str) -> str:
-        client = ollama.AsyncClient(host=OLLAMA_HOST)
+        client = genai.Client()
         # Prepare the payload for the request
         payload = {
             "model": MODEL_NAME,
-            "prompt": prompt,
-            "options": MODEL_OPTIONS,
+            "contents": prompt,
+            "config": MODEL_OPTIONS,
         }
-        # Send the request to the Ollama API
-        response = await client.generate(**payload)
+        # Send the request to the Gemini API
+        response = client.models.generate_content(**payload)
         # Parse the response and extract the text
-        return response.response
+        return response.text
     
 
     @staticmethod
@@ -56,7 +51,7 @@ class LLMClient:
     
 
     @staticmethod
-    def clean_makdown_json(response: str) -> str:
+    def clean_markdown_json(response: str) -> str:
         """Remove markdown formatting and extract JSON from the response.
         
         Args:

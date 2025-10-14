@@ -11,3 +11,4 @@ asyncpg
 python-multipart
 bcrypt==4.0.1
 dotenv
+google-genai

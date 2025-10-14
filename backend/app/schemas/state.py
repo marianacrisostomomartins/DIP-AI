@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, Literal
+from typing import List, Optional
 import json
 import logging
 
@@ -67,7 +67,7 @@ class CanvasState(BaseModel):
             prompt = get_suggestions_prompt(language)
             suggestions = await llm.ask(prompt.format(state=self.get_canvas()))
             suggestions = llm.clean_reasoning_response(suggestions)
-            suggestions = llm.clean_makdown_json(suggestions)
+            suggestions = llm.clean_markdown_json(suggestions)
             logging.debug(f"Sugestões recebidas da LLM: {suggestions}")
             suggestions = json.loads(suggestions)
             for field in self.fields:
