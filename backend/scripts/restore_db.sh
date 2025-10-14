@@ -32,6 +32,8 @@ show_help() {
     echo "  --clean               Limpar objetos existentes antes do restore"
     echo "  --data-only           Restore apenas dados (sem estrutura)"
     echo "  --schema-only         Restore apenas estrutura (sem dados)"
+    echo "  --disconnect-users    Desconectar usuários ativos antes do restore"
+    echo "  --show-connections    Mostrar conexões ativas no banco"
     echo "  -v, --verbose         Saída verbosa"
     echo "  -h, --help            Exibir esta ajuda"
     echo ""
@@ -40,6 +42,8 @@ show_help() {
     echo "  $0 -l -f backup.sql.gz          # Restore local forçado"
     echo "  $0 --drop-db backup.sql         # Recriar banco e restore"
     echo "  $0 --data-only backup.sql       # Restore apenas dados"
+    echo "  $0 --show-connections           # Mostrar conexões ativas"
+    echo "  $0 --disconnect-users backup.sql # Desconectar usuários antes do restore"
 }
 
 # Função para log
@@ -112,9 +116,67 @@ confirm_operation() {
     fi
 }
 
+# Função para mostrar conexões ativas via Docker
+show_connections_docker() {
+    log "Conexões ativas no banco '$DB_NAME':"
+    
+    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d postgres -c "
+        SELECT 
+            pid,
+            usename,
+            application_name,
+            client_addr,
+            state,
+            query_start,
+            query
+        FROM pg_stat_activity 
+        WHERE datname = '$DB_NAME'
+        ORDER BY query_start;"
+}
+
+# Função para mostrar conexões ativas local
+show_connections_local() {
+    log "Conexões ativas no banco '$DB_NAME':"
+    
+    export PGPASSWORD="$DB_PASSWORD"
+    
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "
+        SELECT 
+            pid,
+            usename,
+            application_name,
+            client_addr,
+            state,
+            query_start,
+            query
+        FROM pg_stat_activity 
+        WHERE datname = '$DB_NAME'
+        ORDER BY query_start;"
+    
+    unset PGPASSWORD
+}
+
+# Função para forçar desconexão de usuários via Docker
+force_disconnect_users_docker() {
+    log "Forçando desconexão de usuários do banco '$DB_NAME'..."
+    
+    # Encerrar todas as conexões ativas no banco
+    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d postgres -c "
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity 
+        WHERE datname = '$DB_NAME' 
+        AND pid <> pg_backend_pid();"
+    
+    # Aguardar um momento para as conexões encerrarem
+    sleep 2
+}
+
 # Função para apagar e recriar banco via Docker
 drop_create_db_docker() {
     log "Apagando e recriando banco de dados via Docker..."
+    
+    # Forçar desconexão de usuários
+    force_disconnect_users_docker
     
     # Apagar banco
     docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;"
@@ -125,9 +187,31 @@ drop_create_db_docker() {
     log "Banco de dados recriado com sucesso"
 }
 
+# Função para forçar desconexão de usuários local
+force_disconnect_users_local() {
+    log "Forçando desconexão de usuários do banco '$DB_NAME'..."
+    
+    export PGPASSWORD="$DB_PASSWORD"
+    
+    # Encerrar todas as conexões ativas no banco
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity 
+        WHERE datname = '$DB_NAME' 
+        AND pid <> pg_backend_pid();"
+    
+    unset PGPASSWORD
+    
+    # Aguardar um momento para as conexões encerrarem
+    sleep 2
+}
+
 # Função para apagar e recriar banco local
 drop_create_db_local() {
     log "Apagando e recriando banco de dados local..."
+    
+    # Forçar desconexão de usuários
+    force_disconnect_users_local
     
     export PGPASSWORD="$DB_PASSWORD"
     
@@ -149,6 +233,8 @@ restore_docker() {
     
     if [ "$DROP_DB" = true ]; then
         drop_create_db_docker
+    elif [ "$DISCONNECT_USERS" = true ]; then
+        force_disconnect_users_docker
     fi
     
     local psql_options=""
@@ -187,6 +273,8 @@ restore_local() {
     
     if [ "$DROP_DB" = true ]; then
         drop_create_db_local
+    elif [ "$DISCONNECT_USERS" = true ]; then
+        force_disconnect_users_local
     fi
     
     local psql_options=""
@@ -295,6 +383,8 @@ DATA_ONLY=false
 SCHEMA_ONLY=false
 VERBOSE=false
 IS_COMPRESSED=false
+DISCONNECT_USERS=false
+SHOW_CONNECTIONS=false
 BACKUP_FILE=""
 
 # Parse dos argumentos
@@ -328,6 +418,14 @@ while [[ $# -gt 0 ]]; do
             SCHEMA_ONLY=true
             shift
             ;;
+        --disconnect-users)
+            DISCONNECT_USERS=true
+            shift
+            ;;
+        --show-connections)
+            SHOW_CONNECTIONS=true
+            shift
+            ;;
         -v|--verbose)
             VERBOSE=true
             shift
@@ -350,6 +448,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validações
+if [ "$SHOW_CONNECTIONS" = true ]; then
+    if [ "$USE_DOCKER" = true ]; then
+        show_connections_docker
+    else
+        show_connections_local
+    fi
+    exit 0
+fi
+
 if [ -z "$BACKUP_FILE" ]; then
     error "Arquivo de backup não especificado"
     echo ""
