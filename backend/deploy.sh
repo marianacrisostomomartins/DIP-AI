@@ -13,7 +13,7 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     echo "❌ Docker Compose não está instalado. Por favor, instale o Docker Compose primeiro."
     exit 1
 fi
@@ -26,18 +26,52 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
+Carregar variáveis de ambiente do arquivo .env
+echo "📋 Carregando variáveis de ambiente..."
+source .env
+
+# Configurar ngrok authtoken (se o ngrok estiver instalado)
+if command -v ngrok &> /dev/null; then
+    if [ -n "$NGROK_AUTHTOKEN" ]; then
+        echo "🔑 Configurando authtoken do ngrok..."
+        ngrok config add-authtoken "$NGROK_AUTHTOKEN"
+        echo "✅ Authtoken do ngrok configurado!"
+    else
+        echo "⚠️  NGROK_AUTHTOKEN não encontrado no arquivo .env"
+        echo "   Adicione a linha: NGROK_AUTHTOKEN=seu_token_aqui"
+    fi
+else
+    echo "⚠️  ngrok não está instalado. Para instalar:"
+    echo "   https://ngrok.com/download"
+fi
+
 # Criar diretórios necessários
 echo "📁 Criando diretórios necessários..."
 mkdir -p ssl logs
 
-# Verificar permissões do script SSL
+# Gerar certificados SSL se não existirem
+echo "🔐 Configurando certificados SSL..."
 if [ -f "generate_ssl.sh" ]; then
     chmod +x generate_ssl.sh
+    if [ ! -f "ssl/certificate.crt" ] || [ ! -f "ssl/private.key" ]; then
+        echo "📜 Gerando certificados SSL..."
+        ./generate_ssl.sh
+        if [ $? -eq 0 ]; then
+            echo "✅ Certificados SSL gerados com sucesso!"
+        else
+            echo "❌ Erro ao gerar certificados SSL"
+            exit 1
+        fi
+    else
+        echo "✅ Certificados SSL já existem"
+    fi
+else
+    echo "⚠️  Arquivo generate_ssl.sh não encontrado"
 fi
 
 # Parar containers existentes (se houver)
 echo "🛑 Parando containers existentes..."
-docker-compose -f docker-compose.yml down --remove-orphans || true
+docker compose -f docker-compose.yml down --remove-orphans || true
 
 # Remover imagens antigas (opcional)
 read -p "Deseja remover imagens antigas para economizar espaço? (y/N): " -n 1 -r
@@ -49,11 +83,11 @@ fi
 
 # Build das imagens
 echo "🔨 Construindo imagens Docker..."
-docker-compose -f docker-compose.yml build --no-cache
+docker compose -f docker-compose.yml build --no-cache
 
 # Iniciar os serviços
 echo "▶️  Iniciando serviços..."
-docker-compose -f docker-compose.yml up -d
+docker compose -f docker-compose.yml up -d
 
 # Aguardar que os serviços estejam prontos
 echo "⏳ Aguardando serviços ficarem prontos..."
@@ -61,11 +95,11 @@ sleep 30
 
 # Verificar status dos containers
 echo "📊 Status dos containers:"
-docker-compose -f docker-compose.yml ps
+docker compose -f docker-compose.yml ps
 
 # Verificar logs para possíveis erros
 echo "📋 Verificando logs..."
-docker-compose -f docker-compose.yml logs --tail=50
+docker compose -f docker-compose.yml logs --tail=50
 
 # Teste de conectividade
 echo "🔍 Testando conectividade..."
@@ -73,7 +107,7 @@ if curl -f http://localhost/health &> /dev/null; then
     echo "✅ Backend está respondendo corretamente!"
 else
     echo "❌ Backend não está respondendo. Verificando logs..."
-    docker-compose -f docker-compose.yml logs backend
+    docker compose -f docker-compose.yml logs backend
     exit 1
 fi
 
@@ -101,20 +135,19 @@ echo ""
 echo "🎉 Deploy concluído com sucesso!"
 echo ""
 echo "📝 Informações importantes:"
-echo "   - Backend: http://localhost"
-echo "   - Docs: http://localhost/docs"
+echo "   - Backend HTTP: http://localhost"
+echo "   - Backend HTTPS: https://localhost"
+echo "   - Docs HTTP: http://localhost/docs"
+echo "   - Docs HTTPS: https://localhost/docs"
 echo "   - Health: http://localhost/health"
-echo "   - ngrok logs: tail -f ngrok.log (se iniciado)"
 echo ""
 echo "📂 Logs:"
-echo "   docker-compose -f docker-compose.yml logs -f [serviço]"
-echo "   ngrok: tail -f ngrok.log"
+echo "   docker compose -f docker-compose.yml logs -f [serviço]"
 echo ""
 echo "🛠️  Comandos úteis:"
-echo "   Parar: docker-compose -f docker-compose.yml down"
-echo "   Reiniciar: docker-compose -f docker-compose.yml restart"
-echo "   Status: docker-compose -f docker-compose.yml ps"
-echo "   Parar ngrok: pkill -f ngrok"
+echo "   Parar: docker compose -f docker-compose.yml down"
+echo "   Reiniciar: docker compose -f docker-compose.yml restart"
+echo "   Status: docker compose -f docker-compose.yml ps"
 echo ""
 
 # Mostrar informações do sistema
