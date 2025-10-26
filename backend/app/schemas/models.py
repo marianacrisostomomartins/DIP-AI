@@ -14,3 +14,7 @@ class Canvas(BaseModel):
 
 class FieldAnswer(BaseModel):
     answer: str
+
+class CanvasStateResponse(BaseModel):
+    name: str
+    canvas_state: Dict  # O CanvasState será serializado como Dict

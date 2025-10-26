@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from app.llm_client import LLMClient
-from app.schemas import User, Canvas, CanvasState, FieldAnswer
+from app.schemas import User, Canvas, CanvasState, FieldAnswer, CanvasStateResponse
 from app.schemas.state import init_canvas
 from app.auth import (
     authenticate_user, get_password_hash, create_access_token, get_current_user
@@ -251,8 +251,8 @@ async def get_canvas_state(canvas_id: str, language: str = "pt", current_user: U
         "canvas_state": canvas_state
     }
 
-@app.post("/canvas/{canvas_id}/field/{field_id}/sync")
-async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, language: str = "pt", update_suggestions: bool = True, current_user: User = Depends(get_current_user), db=Depends(get_db)) -> CanvasState:
+@app.post("/canvas/{canvas_id}/field/{field_id}/sync", response_model=CanvasStateResponse)
+async def update_field_answer(canvas_id: str, field_id: int, field_answer: FieldAnswer, language: str = "pt", update_suggestions: bool = True, current_user: User = Depends(get_current_user), db=Depends(get_db)):
     canvas_orm = await db.execute(
         select(CanvasORM)
         .join(CanvasORM.users)
@@ -278,10 +278,10 @@ async def update_field_answer(canvas_id: str, field_id: int, field_answer: Field
     await db.commit()
     
     # Retornar o estado atualizado do canvas
-    return {
-        "name": canvas_name,
-        "canvas_state": canvas_state
-    }
+    return CanvasStateResponse(
+        name=canvas_name,
+        canvas_state=canvas_state.model_dump()
+    )
 
 @app.post("/canvas/{canvas_id}/field/{field_id}")
 async def update_field_answer_async(

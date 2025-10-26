@@ -1,4 +1,4 @@
-from .models import Canvas, User, FieldAnswer
+from .models import Canvas, User, FieldAnswer, CanvasStateResponse
 from .state import CanvasState
 
 __all__ = [
@@ -6,4 +6,5 @@ __all__ = [
     "User",
     "FieldAnswer",
     "CanvasState",
+    "CanvasStateResponse",
 ]
