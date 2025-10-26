@@ -19,6 +19,9 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
   const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
   const [updating, setUpdating] = useState(false);
   const [visibleSections, setVisibleSections] = useState(new Set(['objetivos', 'processos', 'priorizacao', 'tarefas', 'viabilidade']));
+  
+  // Guardar o último estado válido para evitar renderização em branco
+  const [lastValidCanvasFields, setLastValidCanvasFields] = useState<FieldState[]>([]);
 
   // Função para alternar a visibilidade de uma seção
   const toggleSection = (section: string) => {
@@ -43,7 +46,14 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
   };
 
   // Usar os fields do CanvasState
-  const canvasFields = canvasState?.fields || [];
+  const canvasFields = canvasState?.fields || lastValidCanvasFields;
+  
+  // Atualizar o último estado válido quando houver campos
+  useEffect(() => {
+    if (canvasState?.fields && canvasState.fields.length > 0) {
+      setLastValidCanvasFields(canvasState.fields);
+    }
+  }, [canvasState]);
   
   // Encontrar o field selecionado atual (pode ter mudado com a atualização do estado)
   const selected = selectedFieldId ? canvasFields.find(field => field.id === selectedFieldId) || null : null;
@@ -64,6 +74,7 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
     
     try {
       setUpdating(true);
+      
       // Se as sugestões estão habilitadas, usa async (que sempre gera sugestões)
       // Se estão desabilitadas, usa sync com updateSuggestions=false
       if (suggestionsEnabled) {
@@ -71,15 +82,19 @@ export default function CanvasGrid({ canvasId, canvasState, onUpdateField, proce
       } else {
         await onUpdateField(selected.id, value, false, false); // Use sync sem sugestões
       }
+      
+      // Fechar o modal apenas após atualização bem-sucedida
       setSelectedFieldId(null);
+      setModalOpen(null);
     } catch (error) {
+      console.error('Erro ao salvar campo:', error);
       alert(error instanceof Error ? error.message : 'Erro ao salvar');
     } finally {
       setUpdating(false);
     }
   };
 
-  // Verificação de segurança
+  // Verificação de segurança - DEPOIS de todos os hooks
   if (!canvasFields || canvasFields.length === 0) {
     return (
       <div className="text-center py-8">

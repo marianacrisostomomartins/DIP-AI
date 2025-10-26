@@ -42,7 +42,6 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
   // Processar atualização pendente quando modal fechar
   useEffect(() => {
     if (openModalFieldId === null && pendingUpdate) {
-      console.log('Modal fechou, processando atualização pendente');
       setPendingUpdate(false);
       loadCanvasState();
     }
@@ -125,7 +124,6 @@ export function useCanvas(canvasId: string): UseCanvasReturn {
         if (openModalFieldId === null) {
           await loadCanvasState();
         } else {
-          console.log('Modal aberto, marcando atualização como pendente');
           setPendingUpdate(true);
         }
       } else if (job.status === 'failed') {

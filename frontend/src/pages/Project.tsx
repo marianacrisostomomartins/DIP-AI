@@ -76,7 +76,7 @@ export default function Project() {
             </div>
           )}
           
-          {!loading && !error && canvasState && (
+          {!loading && !error && canvasState && canvasState.fields && canvasState.fields.length > 0 && (
             <CanvasGrid 
               canvasId={id}
               canvasState={canvasState}
@@ -84,6 +84,12 @@ export default function Project() {
               processingFields={processingFields}
               setModalOpen={setModalOpen}
             />
+          )}
+          
+          {!loading && !error && canvasState && (!canvasState.fields || canvasState.fields.length === 0) && (
+            <div className="text-center py-8">
+              <p className="text-gray-600">{t('project.noFieldsFound')}</p>
+            </div>
           )}
         </div>
       </div>

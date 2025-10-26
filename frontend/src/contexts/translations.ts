@@ -56,6 +56,7 @@ export const translations = {
     'project.errorLoadingCanvas': 'Erro ao carregar canvas',
     'project.tryAgain': 'Tentar novamente',
     'project.backToHomePage': 'Voltar à página inicial',
+    'project.noFieldsFound': 'Nenhum campo encontrado no canvas.',
     
     // Loading
     'loading.text': 'Carregando...',
@@ -182,6 +183,7 @@ export const translations = {
     'project.errorLoadingCanvas': 'Error loading canvas',
     'project.tryAgain': 'Try again',
     'project.backToHomePage': 'Back to home page',
+    'project.noFieldsFound': 'No fields found in canvas.',
     
     // Loading
     'loading.text': 'Loading...',

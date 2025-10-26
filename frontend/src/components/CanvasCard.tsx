@@ -2,6 +2,7 @@
 import { FieldState } from '../types/api';
 import { Award, Briefcase, LineChart } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSuggestions } from '../contexts/SuggestionsContext';
 
 interface CanvasCardProps {
   field: FieldState;
@@ -11,6 +12,7 @@ interface CanvasCardProps {
 
 export default function CanvasCard({ field, onClick, isProcessing = false }: CanvasCardProps) {
   const { t } = useLanguage();
+  const { suggestionsEnabled } = useSuggestions();
   const filled = !!field.answer;
 
   // Função para definir as cores conforme o id
@@ -115,12 +117,12 @@ export default function CanvasCard({ field, onClick, isProcessing = false }: Can
           </p>
         ) : (
           <div className="space-y-1">
-            {field.question_suggestion && (
+            {suggestionsEnabled && field.question_suggestion && (
               <p className="text-xs text-gray-800 italic line-clamp-2">
                 {field.question_suggestion}
               </p>
             )}
-            {field.answer_suggestion && (
+            {suggestionsEnabled && field.answer_suggestion && (
               <p className="text-xs text-green-500 italic line-clamp-2">
                 {field.answer_suggestion}
               </p>

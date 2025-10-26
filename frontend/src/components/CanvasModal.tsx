@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { FieldState } from '../types/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSuggestions } from '../contexts/SuggestionsContext';
 
 interface CanvasModalProps {
   question: FieldState;
@@ -16,6 +17,7 @@ export default function CanvasModal({
   loading = false
 }: CanvasModalProps) {
   const { t } = useLanguage();
+  const { suggestionsEnabled } = useSuggestions();
   const [value, setValue] = useState(question.answer || '');
   const [hasUserEdited, setHasUserEdited] = useState(false);
   const [initialQuestionId, setInitialQuestionId] = useState(question.id);
@@ -76,7 +78,7 @@ export default function CanvasModal({
         {question.question && (
           <div className="mb-4">
             <p className="text-base text-black mb-1">{question.question}</p>
-            {question.question_suggestion && (
+            {suggestionsEnabled && question.question_suggestion && (
               <p className="text-sm text-blue-700 italic">{question.question_suggestion}</p>
             )}
           </div>
@@ -91,7 +93,7 @@ export default function CanvasModal({
             disabled={loading}
           />
         </div>
-        {question.answer_suggestion && (
+        {suggestionsEnabled && question.answer_suggestion && (
           <div className="mb-4">
             <div className="p-3 bg-green-50 border border-green-200 rounded">
               <p className="text-sm font-semibold text-green-800 mb-1">{t('canvas.answerSuggestion')}</p>
