@@ -1,2 +1,2 @@
 # DIP-AI
-current tool develop in PhD 
+Tool for Discovery in Innovation and AI Solutions
